@@ -1,5 +1,5 @@
 """
-File: 
+File: artemis_agent_win.py
 Description:
 Author: 0x6D76
 Copyright (c) 2025 0x6d76@proton.me
@@ -14,9 +14,10 @@ import win32evtlog
 import win32evtlogutil
 import win32con
 import xml.etree.ElementTree as ET
-from agent.shared.data_formatter import StandardizeWindowsEvent
+from agent.shared.data_formatter import LoadMapping, StandardizeEvent
 
 WIN_AGENT_CONFIG = 'artemis_agent_win.ini'
+WIN_STD_CONFIG = 'standardization_map_win.json'
 
 
 def LoadConfig (config_file = WIN_AGENT_CONFIG):
@@ -142,7 +143,7 @@ def ParseEventData (event):
 
     try:
         root = ET.fromstring (xml_data)
-        ns = {'win': 'http://schemas.microsoft.com/win/2004/08/events/event'}
+        ns = { 'win': 'http://schemas.microsoft.com/win/2004/08/events/event' }
 
         # Extract common fields from System section
         event_id_elem = root.find ('.//win:EventID', ns)
@@ -252,9 +253,12 @@ if __name__ == '__main__':
                 parsed_events.append (parsed_event)
 
         logging.info (f"Finished parsing {len (parsed_events)} events.")
+        current_dir = os.path.dirname (os.path.abspath(__file__))
+        mapping_file = os.path.join (current_dir, WIN_STD_CONFIG)
+        standardized_mapping = LoadMapping (mapping_file)
         standardized_events = []
         for parsed_event in parsed_events:
-            standard_event = StandardizeWindowsEvent (parsed_event, agent_id)
+            standard_event = StandardizeEvent (parsed_event, agent_id, standardized_mapping)
             if standard_event:
                 standardized_events.append (standard_event)
         logging.info (f"Finished standardization of {len (standardized_events)} events.")

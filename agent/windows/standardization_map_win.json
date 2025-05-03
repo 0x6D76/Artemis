@@ -1,0 +1,37 @@
+{
+  "1": {
+    "ProcessId": {
+      "standard_field": "process.process_id",
+      "type": "string"
+    },
+    "Image": {
+      "standard_field": "process.process_name",
+      "type": "string"
+    },
+    "CommandLine": {
+      "standard_field": "process.command_line",
+      "type": "string"
+    },
+    "ParentProcessId": {
+      "standard_field": "process.parent_process_id",
+      "type": "string"
+    },
+    "ParentImage": {
+      "standard_field": "process.parent_process_name",
+      "type": "string"
+    },
+    "User": {
+      "standard_field": "process.user",
+      "type": "string"
+    },
+    "ProcessGuid": {
+      "standard_field": "process.process_guid",
+      "type": "string"
+    },
+    "LogonGuid": {
+      "standard_field": "process.logon_guid",
+      "type": "string"
+    },
+    "_event_type": "ProcessCreate"
+  }
+}
