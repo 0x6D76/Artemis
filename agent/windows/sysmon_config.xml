@@ -1,0 +1,52 @@
+<Sysmon schemaversion="4.90">
+  <HashAlgorithms>md5,sha1,sha256</HashAlgorithms>
+  <EventFiltering>
+
+    <!-- Event ID 1: Process Create -->
+    <ProcessCreate onmatch="include">
+      <CommandLine condition="is not"> </CommandLine>
+    </ProcessCreate>
+
+    <!-- Event ID 3: Network Connect -->
+    <NetworkConnect onmatch="include">
+      <DestinationPort condition="more than">0</DestinationPort>
+    </NetworkConnect>
+
+    <!-- Event ID 5: Process Terminate -->
+    <ProcessTerminate onmatch="include" />
+
+    <!-- Event ID 7: Image Load -->
+    <ImageLoad onmatch="include">
+      <Image condition="end with">.dll</Image>
+    </ImageLoad>
+
+    <!-- Event ID 10: Process Access -->
+    <ProcessAccess onmatch="include" />
+
+    <!-- Event ID 11: File Create -->
+    <FileCreate onmatch="include">
+      <TargetFilename condition="contains">\</TargetFilename>
+    </FileCreate>
+
+    <!-- Event ID 12: Registry Key Create/Open -->
+    <RegistryEvent onmatch="include">
+      <EventType condition="is">CreateKey</EventType>
+    </RegistryEvent>
+
+    <!-- Event ID 14: Registry Key Delete -->
+    <RegistryEvent onmatch="include">
+      <EventType condition="is">DeleteKey</EventType>
+    </RegistryEvent>
+
+    <!-- Event ID 23: File Delete (Archived) -->
+    <FileDelete onmatch="include">
+      <Image condition="is not"> </Image>
+    </FileDelete>
+
+    <!-- Event ID 24: File Delete (Detected) -->
+    <FileDeleteDetected onmatch="include">
+      <Image condition="is not"> </Image>
+    </FileDeleteDetected>
+
+  </EventFiltering>
+</Sysmon>

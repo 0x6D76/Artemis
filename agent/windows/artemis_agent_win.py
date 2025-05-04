@@ -170,40 +170,7 @@ def ParseEventData (event):
                 name_attribute = data_elem.attrib.get ('Name')
                 if name_attribute is not None:
                     # Extract fields based on the 'Name' attribute
-                    if name_attribute == "ProcessId":
-                        event_data ["process_id"] = data_elem.text
-                    elif name_attribute == "Image":
-                        event_data ["process_name"] = data_elem.text
-                    elif name_attribute == "CommandLine":
-                        event_data ["command_line"] = data_elem.text
-                    elif name_attribute == "ParentProcessId":
-                        event_data ["parent_process_id"] = data_elem.text
-                    elif name_attribute == "User":
-                        event_data["user"] = data_elem.text
-                    elif name_attribute == "LogonGuid":
-                        event_data["logon_guid"] = data_elem.text
-                    elif name_attribute == "ProcessGuid":
-                        event_data["process_guid"] = data_elem.text
-                    elif name_attribute == "DestinationIp":
-                        event_data ["destination_ip"] = data_elem.text
-                    elif name_attribute == "DestinationPort":
-                        event_data ["destination_port"] = data_elem.text
-                    elif name_attribute == "SourceIp":
-                        event_data["source_ip"] = data_elem.text
-                    elif name_attribute == "SourcePort":
-                        event_data["source_port"] = data_elem.text
-                    elif name_attribute == "Protocol":
-                        event_data ["protocol"] = data_elem.text
-                    elif name_attribute == "TargetObject":
-                        event_data ["target_object"] = data_elem.text
-                    elif name_attribute == "TargetFilename":
-                        event_data ["target_filename"] = data_elem.text
-                    elif name_attribute == "CreationUtcTime":
-                        event_data["file_creation_utc_time"] = data_elem.text
-                    elif name_attribute == "Value":
-                        event_data ["registry_value_name"] = data_elem.text
-                    elif name_attribute == "Data":
-                        event_data ["registry_value_data"] = data_elem.text
+                    event_data[name_attribute] = data_elem.text
         # --- End of parsing fields from the EventData section ---
 
         # --- Event-specific standardization ---
