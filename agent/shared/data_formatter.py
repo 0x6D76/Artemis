@@ -46,12 +46,16 @@ def LoadMapping (mapping_file):
 
 def CreateBaseStandardEvent (parsed_event, agent_id):
     """Creates base structure for a standardized event."""
+    os = parsed_event.get('os')
+    source = "auditd"
+    if os == "windows":
+        source = "sysmon"
     return {
         "agent_id": agent_id,
         "event_timestamp": None,  # Will be formatted in StandardizeEvent
         "hostname": parsed_event.get ("hostname"),
-        "os": parsed_event.get ("os"),
-        "event_source": parsed_event.get ("event_source"),  # Get source from parsed data (to be added)
+        "os": os,
+        "event_source": source, # parsed_event.get ("event_source"), Get source from parsed data (to be added)
         "original_event_id": parsed_event.get ("event_id"),
         "standard_event_type": parsed_event.get ("event_type"),
         # Initialize nested objects
@@ -138,18 +142,19 @@ def StandardizeEvent (parsed_event, agent_id, mapping):
                 logging.warning (f"Standardization: Mapping found for {original_field_name}, but 'standard_field' is missing or empty")
         else:
             # No mapping found for original_field
-            standard_event ["other_data"][original_field_name] = original_field_value
-            logging.debug (f"Standardization: No direct mapping found for {original_field_name}")
+            if original_field_name != "UtcTime":
+                standard_event ["other_data"][original_field_name] = original_field_value
+                logging.debug (f"Standardization: No direct mapping found for {original_field_name}")
 
     # Formatting timestamp
     timestamp_str = parsed_event.get ("timestamp")
     if timestamp_str:
         try:
-            standard_event["timestamp"] = timestamp_str
+            standard_event["event_timestamp"] = timestamp_str
             dt_obj = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
             standard_event["event_timestamp"] = dt_obj.isoformat(timespec='microseconds')
         except Exception as e:
             logging.error (f"Couldn't standardize timestamp: {e}")
-            standard_event ["timestamp"] = timestamp_str
+            standard_event ["event_timestamp"] = timestamp_str
 
     return standard_event

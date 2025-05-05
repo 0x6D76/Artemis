@@ -17,7 +17,7 @@
 
     <!-- Event ID 7: Image Load -->
     <ImageLoad onmatch="include">
-      <Image condition="end with">.dll</Image>
+      <Image condition="is">*</Image>
     </ImageLoad>
 
     <!-- Event ID 10: Process Access -->

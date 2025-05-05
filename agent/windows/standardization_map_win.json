@@ -1,34 +1,33 @@
 {
   "1": {
     "_event_type": "ProcessEvent",
-    "action": "create",
-    "PID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
-    "ParentPID": { "standard_field": "process.parent_guid", "type": "string" },
-    "User": { "standard_field": "process.user", "type": "string"},
+    "_action": "create",
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
+    "ParentProcessId": { "standard_field": "process.parent_process_id", "type": "string" },
+    "ParentProcessGuid": { "standard_field": "process.parent_process_guid", "type": "string" },
+    "User": { "standard_field": "process.user", "type": "string" },
     "Image": { "standard_field": "process.process_name", "type": "string" },
     "ParentImage": { "standard_field": "process.parent_process_name", "type": "string" },
     "CommandLine": { "standard_field": "process.command_line", "type": "string" },
     "ParentCommandLine": { "standard_field": "process.parent_command_line", "type": "string" },
     "Hashes": { "standard_field": "process.hash", "type": "string" },
-    "ParentHash": { "standard_field": "process.parent_hash", "type": "string" },
     "IntegrityLevel": { "standard_field": "process.integrity_level", "type": "string" }
   },
 
   "3": {
     "_event_type": "NetworkEvent",
-    "action": "connect",
-    "PID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
-    "ParentPID": { "standard_field": "process.parent_guid", "type": "string" },
-    "ParentImage": { "standard_field": "process.parent_process_name", "type": "string" },
-    "CommandLine": { "standard_field": "process.command_line", "type": "string" },
-    "IntegrityLevel": { "standard_field": "process.integrity_level", "type": "string" },
-    "Hashing": { "standard_field": "process.hash", "type": "string"},
+    "_action": "connect",
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
+    "User": { "standard_field": "process.user", "type": "string" },
+    "Image": { "standard_field": "process.process_name", "type": "string" },
     "Protocol": { "standard_field": "network.protocol", "type": "string" },
     "Initiated": { "standard_field":  "network.initiated", "type":  "boolean" },
+    "SourceIsIpv6": { "standard_file": "network.is_source_ipv6", "type": "boolean" },
     "SourceIp": { "standard_field": "network.source_ip", "type": "string" },
     "SourcePort": { "standard_field": "network.source_port", "type": "integer"},
+    "DestinationIsIpv6": { "standard_file": "network.is_destination_ipv6", "type": "boolean" },
     "DestinationIp": { "standard_field": "network.destination_ip", "type": "string" },
     "DestinationPort": { "standard_field": "network.destination_port", "type": "integer"}
   },
@@ -36,8 +35,8 @@
   "5": {
     "_event_type": "ProcessEvent",
     "_action": "terminate",
-    "PID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.process_name", "type": "string" }
   },
@@ -45,41 +44,44 @@
   "7": {
     "_event_type": "ImageEvent",
     "_action": "Loaded",
-    "ProcessID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "Image": { "standard_field": "process.process_name", "type": "string" },
-    "Hashes": { "standard_field": "process.process_name", "type": "string" },
-    "ImageLoadedSignature": { "standard_field":  "image.is_signed", "type": "string" },
-    "ImageLoadedSignatureStatus": { "standard_field": "image.signature_status", "type": "string" }
+    "Hashes": { "standard_field": "process.hash", "type": "string" },
+    "User": { "standard_field": "process.user", "type": "string"},
+    "ImageLoaded": { "standard_field": "image.path", "type": "string" },
+    "Signed": { "standard_field":  "image.is_signed", "type": "boolean" },
+    "Signature": { "standard_field": "image.signature", "type": "string" },
+    "SignatureStatus": { "standard_field": "image.signature_status", "type": "string" }
   },
 
   "10": {
     "_event_type": "ProcessEvent",
     "_action": "access",
-    "SourceProcessGUID": { "standard_file": "process.source_process_guid", "type": "string" },
-    "SourceProcessID": { "standard_file": "process.source_process_id", "type": "string" },
-    "SourceImage": { "standard_file": "process.source_process_name", "type": "string" },
-    "DestinationProcessGUID": { "standard_file": "process.destination_process_guid", "type": "string" },
-    "DestinationProcessID": { "standard_file": "process.destination_process_id", "type": "string" },
-    "DestinationImage": { "standard_file": "process.destination_process_name", "type": "string" },
-    "GrantedAccess": { "standard_file": "process.access_granted", "type": "string"}
+    "SourceProcessGuid": { "standard_field": "process.source_process_guid", "type": "string" },
+    "SourceProcessId": { "standard_field": "process.source_process_id", "type": "string" },
+    "SourceImage": { "standard_field": "process.source_process_name", "type": "string" },
+    "DestinationProcessGuid": { "standard_field": "process.destination_process_guid", "type": "string" },
+    "DestinationProcessId": { "standard_field": "process.destination_process_id", "type": "string" },
+    "DestinationImage": { "standard_field": "process.destination_process_name", "type": "string" },
+    "GrantedAccess": { "standard_field": "process.access_granted", "type": "string"}
   },
 
   "11": {
     "_event_type": "FileEvent",
     "_action": "create",
-    "PID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.process_name", "type": "string" },
-    "TargetFileName": { "standard_field": "file.target_file_name", "type": "string" }
+    "TargetFilename": { "standard_field": "file.file_path", "type": "string" }
   },
 
   "12": {
     "_event_type": "RegistryEvent",
-    "_action": "key_create_open",
-    "PID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
+    "_action": "key_add_delete",
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.process_name", "type": "string" },
     "TargetObject": { "standard_field": "registry.key_path", "type": "string" }
@@ -87,54 +89,49 @@
 
   "13": {
     "_event_type": "RegistryEvent",
-    "_action": "key_write_modify",
-    "PID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
+    "_action": "key_set",
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.process_name", "type": "string" },
-    "EventType": { "standard_field": "registry.type", "type": "string" },
     "TargetObject": { "standard_field": "registry.key_path", "type": "string" },
     "Details": { "standard_field": "registry.key_value", "type": "string" }
   },
 
   "14": {
     "_event_type": "RegistryEvent",
-    "_action": "key_delete",
-    "PID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
+    "_action": "key_rename",
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.process_name", "type": "string" },
-    "EventType": { "standard_field": "registry.type", "type": "string" },
-    "TargetObject": { "standard_field": "registry.key_path", "type": "string" }
+    "TargetObject": { "standard_field": "registry.key_path", "type": "string" },
+    "NewName": { "standard_field": "registry.new_key_path", "type": "string" }
   },
 
   "23": {
     "_event_type": "FileEvent",
     "_action": "delete_archived",
-    "ProcessID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
-    "ProcessName": { "standard_field": "process.process_name", "type": "string" },
-    "ParentCommandLine": { "standard_field": "process.parent_command_line", "type": "string" },
-    "FileName": { "standard_field": "file.file_name", "type": "string" },
-    "FilePath": { "standard_field": "file.file_path", "type": "string" },
-    "FileType": { "standard_field": "file.file_type", "type": "string" },
-    "SHA1": { "standard_field": "file.hash_sha1", "type": "string" },
-    "MD5": { "standard_field": "file.hash_md5", "type": "string" }
+    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "TargetFilename": { "standard_field": "file.file_path", "type": "string" },
+    "Hashes": { "standard_field": "file.hashes", "type": "string" },
+    "IsExecutable": { "standard_field": "file.is_executable", "type": "boolean" },
+    "Archived": { "standard_field": "file.archived", "type": "boolean" }
+
   },
 
-  "24": {
+  "26": {
     "_event_type": "FileEvent",
     "_action": "delete_detected",
-    "ProcessID": { "standard_field": "process.process_id", "type": "string" },
-    "ProcessGUID": { "standard_field": "process.process_guid", "type": "string" },
+    "ProcessId": { "standard_field": "process.process_id", "type": "string" },
+    "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
-    "ProcessName": { "standard_field": "process.process_name", "type": "string" },
-    "ParentCommandLine": { "standard_field": "process.parent_command_line", "type": "string" },
-    "FileName": { "standard_field": "file.file_name", "type": "string" },
-    "FilePath": { "standard_field": "file.file_path", "type": "string" },
-    "FileType": { "standard_field": "file.file_type", "type": "string" },
-    "SHA1": { "standard_field": "file.hash_sha1", "type": "string" },
-    "MD5": { "standard_field": "file.hash_md5", "type": "string" }
+    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "TargetFilename": { "standard_field": "file.file_path", "type": "string" },
+    "Hashes": { "standard_field": "file.hashes", "type": "string" },
+    "IsExecutable": { "standard_field": "file.is_executable", "type": "boolean" }
   }
 }

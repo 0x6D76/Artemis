@@ -14,14 +14,15 @@ import win32evtlog
 import win32evtlogutil
 import win32con
 import xml.etree.ElementTree as ET
+from agent.shared.utils import LoadConfig
 from agent.shared.data_formatter import LoadMapping, StandardizeEvent
 
 WIN_AGENT_CONFIG = 'artemis_agent_win.ini'
 WIN_STD_CONFIG = 'standardization_map_win.json'
 
 
-def LoadConfig (config_file = WIN_AGENT_CONFIG):
-    """Loads configuration from the given INI file."""
+"""def LoadConfig (config_file = WIN_AGENT_CONFIG):
+    
     config = configparser.ConfigParser ()
     try:
         config.read (config_file)
@@ -32,7 +33,7 @@ def LoadConfig (config_file = WIN_AGENT_CONFIG):
     except Exception as e:
         print (f"An unexpected error occurred loading config: {e}")
         sys.exit (1)
-
+"""
 
 def SetupLogging (config):
     """Configures logging for the Windows agent."""
@@ -203,7 +204,9 @@ def ParseEventData (event):
 
 
 if __name__ == '__main__':
-    app_config = LoadConfig ()
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_file = os.path.join(current_dir, WIN_AGENT_CONFIG)
+    app_config = LoadConfig (config_file)
 
     if app_config:
         SetupLogging (app_config)
