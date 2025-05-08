@@ -21,24 +21,10 @@ WIN_AGENT_CONFIG = 'artemis_agent_win.ini'
 WIN_STD_CONFIG = 'standardization_map_win.json'
 
 
-"""def LoadConfig (config_file = WIN_AGENT_CONFIG):
-    
-    config = configparser.ConfigParser ()
-    try:
-        config.read (config_file)
-        return config
-    except configparser.Error as e:
-        print (f"Error reading configuration file: {e}")
-        sys.exit (1)  # Exit if configuration cannot be loaded
-    except Exception as e:
-        print (f"An unexpected error occurred loading config: {e}")
-        sys.exit (1)
-"""
-
 def SetupLogging (config):
     """Configures logging for the Windows agent."""
     log_file = config.get ('logging', 'log_file')
-    log_level_str = config.get ('logging', 'log_level').upper ()
+    log_level_str = config.get ('logging', 'log_level', fallback = 'INFO').upper ()
 
     # Create log directory, if it doesn't exist
     log_dir = os.path.dirname (log_file)
@@ -117,7 +103,7 @@ def CollectRawWindowsEvents (config):
         return []
 
     except Exception as e:
-        logging.error(f"An unexpected error occurred during initial query: {e}")
+        logging.error (f"An unexpected error occurred during initial query: {e}")
         return []
 
     finally:
@@ -129,7 +115,7 @@ def CollectRawWindowsEvents (config):
                     logging.info ("Closed event log handle using close ().")
                 else:
                     win32api.CloseHandle (handle)
-                    logging.info("Closed event log handle using win32api.")
+                    logging.info ("Closed event log handle using win32api.")
             except Exception as e:
                 logging.error (f"Error attempting to close handle {handle}: {e}")
 
@@ -171,7 +157,7 @@ def ParseEventData (event):
                 name_attribute = data_elem.attrib.get ('Name')
                 if name_attribute is not None:
                     # Extract fields based on the 'Name' attribute
-                    event_data[name_attribute] = data_elem.text
+                    event_data [name_attribute] = data_elem.text
         # --- End of parsing fields from the EventData section ---
 
         # --- Event-specific standardization ---
@@ -190,7 +176,7 @@ def ParseEventData (event):
             event_data ["event_type"] = "RegistryEvent"
         elif event_id == '23':  # FileDelete
             event_data ["event_type"] = "FileDelete"
-        elif event_id == '24': # FileDeleteDetected
+        elif event_id == '26': # FileDeleteDetected
             event_data ["event_type"] = "FileDeleteDetected"
         else:
             event_data ["event_type"] = "OtherSysmonEvent"
@@ -204,14 +190,14 @@ def ParseEventData (event):
 
 
 if __name__ == '__main__':
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = os.path.join(current_dir, WIN_AGENT_CONFIG)
+    current_dir = os.path.dirname (os.path.abspath(__file__))
+    config_file = os.path.join (current_dir, WIN_AGENT_CONFIG)
     app_config = LoadConfig (config_file)
 
     if app_config:
         SetupLogging (app_config)
-        logging.info ("Artemis Win Agent is up and running.")
-        agent_id = "Win-agent-1"
+        logging.info ("Artemis Windows Agent is up and running.")
+        agent_identity = app_config.get('agent_settings', 'agent_id', fallback="windows-agent-unknown")
 
         raw_events = CollectRawWindowsEvents (app_config)
         logging.info (f"Received {len(raw_events)} raw events from collection module.")
@@ -228,14 +214,13 @@ if __name__ == '__main__':
         standardized_mapping = LoadMapping (mapping_file)
         standardized_events = []
         for parsed_event in parsed_events:
-            standard_event = StandardizeEvent (parsed_event, agent_id, standardized_mapping)
+            standard_event = StandardizeEvent (parsed_event, agent_identity, standardized_mapping)
             if standard_event:
                 standardized_events.append (standard_event)
         logging.info (f"Finished standardization of {len (standardized_events)} events.")
 
         logging.info ("Sample- Standardized events")
-        for i, event in enumerate(standardized_events[:50]):
-            logging.info(f"Standardized Event {i + 1}:\n{json.dumps(event, indent=4)}")
+        for i, event in enumerate(standardized_events [:50]):
+            logging.info (f"Standardized Event {i + 1}:\n{json.dumps(event, indent=4)}")
 
-        logging.info("Artemis Win Agent is done executing.")
-
+        logging.info ("Artemis Windows Agent is done executing.")
