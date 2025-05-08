@@ -34,10 +34,8 @@ def SetupLogging (config):
             handlers.append (file_handler)
         except Exception as e:
             print (f"Error setting up logging: {e} Falling back to console logging.")
-
-        # Adding stdout StreamHandler as fallback for visibility
-        console_handler = logging.StreamHandler (sys.stdout)
-        handlers.append (console_handler)
+            console_handler = logging.StreamHandler(sys.stdout)
+            handlers.append(console_handler)
 
         logging.basicConfig (
             level = level,
@@ -132,6 +130,7 @@ if __name__ == '__main__':
     app_config = LoadConfig(config_file)
 
     if app_config:
+        SetupLogging (app_config)
         logging.info ("Artemis Linux agent is up and running.")
         agent_identity = app_config.get('linux_agent', 'agent_id', fallback="linux-agent-unknown")
 
@@ -139,5 +138,12 @@ if __name__ == '__main__':
 
         if raw_lines:
             grouped_raw_events = GroupAuditdLines (raw_lines)
+            # Verifying grouping by logging a few samples
+            logging.info ("Sample of grouped raw events:")
+            for i, event_lines in enumerate(grouped_raw_events [:5]):
+                logging.info (f"Raw Event: {i+1} - ({len (event_lines)}) lines")
+                for line in event_lines:
+                    logging.info (line)
+                logging.info ("----------")
 
         logging.info("Artemis Linux agent is done executing.")
