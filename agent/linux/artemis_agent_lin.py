@@ -5,12 +5,24 @@ Author: 0x6D76
 Copyright (c) 2025 0x6d76@proton.me
 """
 import logging
+import json
 import os
 import re
 import sys
+from datetime import datetime, timezone, timedelta
 from agent.shared.utils import LoadConfig
 
 LIN_AGENT_CONFIG = 'artemis_agent_lin.ini'
+# Using regex to find the start of an auditd message to extract timestamp and serial
+# Example: type=SYSCALL msg=audit(1678886400.000:123):
+# This regex looks for 'type=', then word characters (\w+), spaces (\s+), 'msg=audit(',
+# then captures the timestamp (\d+\.\d+), ':', captures the serial (\d+), then '):'
+AUDIT_MSG_PATTERN = re.compile(r'^type=\w+\s+msg=audit\((\d+\.\d+):(\d+)\):')
+# Regex to parse key=value pairs, handling quoted strings.
+# This regex looks for word characters for the key, followed by '=', then either
+# a double-quoted string (allowing spaces inside) or non-space characters (\S+).
+# It also handles the 'msg=audit(...)` part at the start of the line.
+AUDIT_FIELD_PATTERN = re.compile(r'(\w+)=("[^"]*"|\S+)')
 
 
 def SetupLogging (config):
@@ -75,18 +87,12 @@ def GroupAuditdLines (raw_lines):
     current_event_serial = None
     current_event_timestamp = None
 
-    # Using regex to find the start of an auditd message to extract timestamp and serial
-    # Example: type=SYSCALL msg=audit(1678886400.000:123):
-    # This regex looks for 'type=', then word characters (\w+), spaces (\s+), 'msg=audit(',
-    # then captures the timestamp (\d+\.\d+), ':', captures the serial (\d+), then '):'
-    audit_msg_pattern = re.compile(r'^type=\w+\s+msg=audit\((\d+\.\d+):(\d+)\):')
-
     for line in raw_lines:
         line = line.strip ()
         # Skipping empty lines
         if not line:
             continue
-        match = audit_msg_pattern.match (line)
+        match = AUDIT_MSG_PATTERN.match (line)
 
         if match:
             # Start of a new potential event
@@ -124,6 +130,132 @@ def GroupAuditdLines (raw_lines):
     return grouped_events
 
 
+def ParseAuditdEvent (event_lines):
+    """
+    Parses a list of log lines belonging to a single event into a dictionary,
+    using original auditd field names as keys.
+    """
+
+    if not event_lines:
+        return None
+    parsed_data = {
+        "os" : "linux",
+        "event_source" : "auditd",
+        "original_raw_lines" : event_lines, # For debugging
+        "_line_types" : [] # To store the type of events present in this event
+    }
+    serial_number = None
+    timestamp_str = None
+    event_utc_time = None
+    first_line = event_lines[0]
+    msg_match = AUDIT_MSG_PATTERN.search (first_line)
+
+    if msg_match:
+        timestamp_str = msg_match.group (1)
+        serial_number = msg_match.group (2)
+        parsed_data ["serial_number"] = serial_number
+        parsed_data ["timestamp"] = timestamp_str
+
+        #--- Converting auditd timestamp (seconds.milliseconds) to ISO 8601 UTC---
+        try:
+            seconds, microseconds = timestamp_str.split ('.')
+            # Convert microseconds part to ensure correct precision, pad and trim to 6 digits, if needed
+            microseconds = microseconds.ljust(6, '0')[:6]
+            # For simplicity, treating this as a local timestamp and then convert to UTC if possible
+            # Use datetime.fromtimestamp with the float value
+            dt_obj_local = datetime.fromtimestamp (float (f"{seconds}.{microseconds}"))
+
+            # Convert naive local datetime to UTC
+            # Requires system's timezone to be correctly set where agent runs
+            try:
+                import time
+                utc_offset_sec = time.timezone if (time.localtime().tm_isdst == 0) else time.altzone
+                utc_offset = timezone (-timedelta (seconds=utc_offset_sec))
+                dt_obj_aware_local = dt_obj_local.replace (tzinfo=utc_offset)
+                event_utc_time = dt_obj_aware_local.astimezone (timezone.utc).isoformat ()
+
+            except Exception as e:
+                logging.warning(f"Could not convert auditd timestamp to UTC: {e}")
+                # Fallback to local ISO format
+                event_utc_time = dt_obj_local.isoformat ()
+
+        # In the event of exception, log it and keep original timestamp string
+        except ValueError as e:
+            logging.warning (f"Could not parse auditd timestamp '{timestamp_str}' : {e}")
+            event_utc_time = timestamp_str
+        except Exception as e:
+            logging.warning (f"An unexpected error occurred while processing auditd timestamp '{timestamp_str}' : {e}")
+            event_utc_time = timestamp_str
+
+        parsed_data ["event_utc_time"] = event_utc_time
+
+        # Process each line in event buffer
+        for line in event_lines:
+            line = line.strip ()
+            if not line:
+                continue
+
+            # Regex pattern to extract line type (e.g., SYSCALL, CWD, PATH)
+            line_type_match = re.match (r'^type=(\w+)', line)
+            line_type = 'UNKNOWN' # Default line_type
+            if line_type_match:
+                line_type = line_type_match.group (1)
+                if line_type not in parsed_data["_line_types"]:
+                    parsed_data["_line_types"].append (line_type)
+
+            # Find the start of the key=value pairs after the msg=audit(...) part
+            data_start_match = AUDIT_MSG_PATTERN.search (line)
+            data_start_index = data_start_match.end if data_start_match else 0
+            data_string = line [data_start_index:].strip ()
+            # Find all key=value pairs in data string
+            field_matches = AUDIT_FIELD_PATTERN.findall (data_string)
+
+            # Add fields to parsed dictionary
+            # Handling duplicates: allowing latest line to overwrite existing entries if keys are the same
+            # To implement: more efficient solution
+            for field_name, field_value in field_matches:
+                # Cleaning up quotes from values
+                if field_value.startswith ('"') and field_value.endswith ('"'):
+                    field_value = field_value [1:-1]
+                # Decode hex-encoded values
+                if field_value.startswith ('hex:'):
+                    try:
+                        # Attempt to decode as utf-8, with bytes as fallback
+                        hex_data = bytes.fromhex (field_value [4:])
+
+                        try:
+                            field_value = hex_data.decode ('utf-8')
+                        except UnicodeDecodeError:
+                            logging.warning (
+                                f"Could not decode hex value '{field_value}' as utf-8. Keeping it as bytes."
+                            )
+                            field_value = hex_data
+                    except ValueError:
+                        logging.warning (f"Could not decode hex value '{field_value}'. Keeping it as original.")
+
+                # Using original field name as key
+                parsed_data [field_name] = field_value
+
+        # --- Determine a basic event type based on parsed data ---
+        event_type = "OtherEvent"  # Default
+        syscall_num = parsed_data.get("type_SYSCALL", {}).get("syscall")
+        rule_key = parsed_data.get("key")  # 'key' field often indicates rule match\
+        if syscall_num in ["59", "322", "320", "321"]:  # Common execve/execveat syscall numbers
+            event_type = "ProcessCreate"
+        elif rule_key and "artemis_exec" in rule_key:  # Filter based on your auditd rule key
+            event_type = "ProcessCreate"  # Or refine based on specific key meaning
+        elif rule_key and "artemis_file_access" in rule_key:
+            event_type = "FileEvent"
+        elif syscall_num in ["42", "49", "50"]:  # Common socket/connect/accept syscalls
+            event_type = "NetworkEvent"
+        # Add more conditions based on your target techniques and auditd rules/syscalls
+
+        parsed_data["event_type"] = event_type
+
+
+    return parsed_data
+
+
 if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_file = os.path.join(current_dir, LIN_AGENT_CONFIG)
@@ -139,11 +271,24 @@ if __name__ == '__main__':
         if raw_lines:
             grouped_raw_events = GroupAuditdLines (raw_lines)
             # Verifying grouping by logging a few samples
-            logging.info ("Sample of grouped raw events:")
+            logging.debug ("Sample of grouped raw events:")
             for i, event_lines in enumerate(grouped_raw_events [:5]):
-                logging.info (f"Raw Event: {i+1} - ({len (event_lines)}) lines")
+                logging.debug (f"Raw Event: {i+1} - ({len (event_lines)}) lines")
                 for line in event_lines:
-                    logging.info (line)
-                logging.info ("----------")
+                    logging.debug (line)
+                logging.debug ("----------")
+            # Parsing grouped events
+            parsed_auditd_events = []
+            for raw_event_lines in grouped_raw_events:
+                parsed_auditd_event = ParseAuditdEvent (raw_event_lines)
+                if parsed_auditd_event:
+                    parsed_auditd_events.append (parsed_auditd_event)
+            logging.info (f"Finished parsing {len (parsed_auditd_events)} auditd events.")
+            # Log a sample to verify parsing
+            logging.info ("Sample of parsed auditd events:")
+            for i, parsed_event in enumerate (parsed_auditd_events [:3]):  # Log first 3 parsed events
+                logging.info (f"--- Parsed Event {i + 1} ---")
+                logging.info (json.dumps(parsed_event, indent=4))
+                logging.info ("--------------------")
 
         logging.info("Artemis Linux agent is done executing.")

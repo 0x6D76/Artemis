@@ -1,32 +1,32 @@
 # <b><u>Phase 1: Planning and Design</u></b>
 
 ## <i>Step 1: Define scope and Specific Use Cases</i>
-- [ ] Precisely list the specific types of suspicious activities that will be the initial focus of the scope.
-- [ ] Choose operating system(s) that the tool will support.
-- [ ] Decide on the initial data sources to prioritize.
-- [ ] Outline the basic architecture.
-- [ ] Decide on the data storage solution.
-- [ ] Plan the technology stack for
+- [x] Precisely list the specific types of suspicious activities that will be the initial focus of the scope.
+- [x] Choose operating system(s) that the tool will support.
+- [x] Decide on the initial data sources to prioritize.
+- [x] Outline the basic architecture.
+- [x] Decide on the data storage solution.
+- [x] Plan the technology stack for
     
-  - [ ] Server
-  - [ ] Data aggregation
-  - [ ] Visualization
+  - [x] Server
+  - [x] Data aggregation
+  - [x] Visualization
 
 ## <i>Step 2: Setup Lab Environment</i>
-- [ ] Plan on the required number of VMs and deploy them. To consider- Agents (Windows & Linux), Server and Attacker.
-- [ ] Configure networking within the lab environment so VMs can communicate.
-- [ ] Install necessary tools and software appropriate to the VMs.
-- [ ] Setup separate VM for server components and install appropriate tools and packages.
-- [ ] Develop a network diagram of the lab setup.
+- [x] Plan on the required number of VMs and deploy them. To consider- Agents (Windows & Linux), Server and Attacker.
+- [x] Configure networking within the lab environment so VMs can communicate.
+- [x] Install necessary tools and software appropriate to the VMs.
+- [x] Setup separate VM for server components and install appropriate tools and packages.
+  - [x] Develop a network diagram of the lab setup.
 
 ---
 
 # <b><u>Phase 2: Agent Development - Core Functionality</b></u>
 
 ## <i>Step 3: Develop Basic Event Log Monitoring</i>
-- [ ] On Windows, develop code to interface with and consume Sysmon events, focussing on reading relevant security 
+- [x] On Windows, develop code to interface with and consume Sysmon events, focussing on reading relevant security 
       channels.
-- [ ] On Linux, develop code to read from ```auditd```.
+- [x] On Linux, develop code to read from ```auditd```.
 - [ ] Implement basic parsing logic for log entries, to extract key information, such as timestamp, user, event type, 
       process ID and other relevant parameters.
 
@@ -72,4 +72,72 @@
 
 ---
 
-# <b><u>Phase 3: Advanced Features and Visualization</b></u>
+# <b><u>Phase 4: Advanced Features and Visualization</b></u>
+
+## <i>Step 10: Implement Anomaly Detection (Basic)</i>
+- [ ] Choose a specific type of anomalous behavior to detect (e.g., a process running from a directory it normally 
+      doesn't, unusual network connections for a specific process, a user logging in at an unusual time).
+- [ ] Explore simple anomaly detection techniques (e.g., statistical analysis of frequency, 
+      simple behavioral profiling).
+- [ ] Implement the chosen anomaly detection logic on the server and flag potential anomalies.
+
+## <i>Step 11: Set up Prometheus for Metrics Collection</i>
+- [ ] Install and configure Prometheus on the server VM.
+- [ ] Modify the agent and server components to expose relevant metrics (e.g., number of events collected, 
+      processing time, number of detections) in a format Prometheus can scrape.
+
+## <i>Step 12: Build Threat Hunting Dashboards with Grafana</i>
+- [ ] Install and configure Grafana on the server VM.
+- [ ] Configure Grafana data sources to connect to the data storage (Elasticsearch, PostgreSQL, etc.) and Prometheus.
+- [ ] Design and build dashboards in Grafana to visualize the collected data, detections, anomalies, and system metrics. 
+      Create dashboards tailored for threat hunting (e.g., process trees, timeline of events for a host, geographical 
+      distribution of suspicious connections).
+
+## <i>Step 13: Implement Basic Remote Response Actions</i>
+- [ ] Design a secure command and control mechanism for the server to send basic commands to the agent 
+      (e.g., retrieve a file, terminate a process)
+- [ ] Implement the agent-side functionality to receive and execute these commands securely.
+
+---
+
+# <b><u>Phase 5: Testing and Documentation</b></u>
+
+## <i>Step 14: Comprehensive Testing</i>
+- [ ] Conduct thorough testing of the agent on both Windows and Linux, ensuring it collects data correctly and 
+      efficiently.
+- [ ] Test the detection rules and anomaly detection with simulated malicious activities in the lab.
+- [ ] Test the server's data ingestion and processing capabilities.
+- [ ] Test the Grafana dashboards to ensure they accurately reflect the data and provide useful insights.
+- [ ] Test the remote response actions carefully in the isolated lab.
+
+## <i>Step 15: Refine and Optimize</i>
+- [ ] Based on testing, optimize the agent's performance and resource usage.
+- [ ] Refine the detection logic to reduce false positives and improve accuracy.
+- [ ] Improve the usability and clarity of the Grafana dashboards.
+
+## <i>Step 16: Comprehensive Documentation</i>
+- [ ] Write a detailed project report covering:
+  - Project overview and goals.
+  - Architecture design (with diagrams).
+  - Technology stack used.
+  - Agent implementation details (including challenges with OS APIs).
+  - Server implementation details (data ingestion, storage, processing).
+  - Detection logic and anomaly detection methods.
+  - Threat intelligence integration.
+  - Grafana dashboard design and how to use them for hunting.
+  - Remote response capabilities and security considerations.
+  - Installation and configuration guides for the agent and server.
+  - Lessons learned and future improvements.
+
+---
+
+# <b><u>Potential Technologies to Consider</b></u>
+
+- <b>Agent Development:</b> Python (with libraries for interacting with OS APIs), Go, Rust (for performance).
+- <b>Event Ingestion:</b> Syslog, Apache Kafka, RabbitMQ.
+- <b>Server/Backend:</b> Python (Flask/Django), Go, Node.js.
+- <b>Data Storage:</b> Elasticsearch, PostgreSQL, TimescaleDB (for time-series data).
+- <b>Metrics Collection:</b> Prometheus Node Exporter (for host metrics), custom exporters for agent metrics.
+- <b>Visualization:</b> Grafana.
+- <b>Anomaly Detection Libraries:</b> Scikit-learn (for Python), or explore dedicated time-series anomaly detection 
+   libraries.
