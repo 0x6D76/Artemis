@@ -205,7 +205,7 @@ def ParseAuditdEvent (event_lines):
 
             # Find the start of the key=value pairs after the msg=audit(...) part
             data_start_match = AUDIT_MSG_PATTERN.search (line)
-            data_start_index = data_start_match.end if data_start_match else 0
+            data_start_index = data_start_match.end () if data_start_match else 0
             data_string = line [data_start_index:].strip ()
             # Find all key=value pairs in data string
             field_matches = AUDIT_FIELD_PATTERN.findall (data_string)
@@ -218,16 +218,18 @@ def ParseAuditdEvent (event_lines):
                 if field_value.startswith ('"') and field_value.endswith ('"'):
                     field_value = field_value [1:-1]
                 # Decode hex-encoded values
-                if field_value.startswith ('hex:'):
+                if field_value.startswith ('hex:') and re.fullmatch (r'hex:[0-9a-fA-F]+', field_value):
                     try:
                         # Attempt to decode as utf-8, with bytes as fallback
                         hex_data = bytes.fromhex (field_value [4:])
 
                         try:
-                            field_value = hex_data.decode ('utf-8')
-                        except UnicodeDecodeError:
+                            decoded_value = hex_data.decode ('utf-8', errors = 'replace')
+                            field_value = decoded_value
+                            logging.debug (f"Decoded hex field '{field_name}' : '{field_value}'")
+                        except Exception as e:
                             logging.warning (
-                                f"Could not decode hex value '{field_value}' as utf-8. Keeping it as bytes."
+                                f"Could not decode hex value '{field_value}' as utf-8: {e}. Keeping it as bytes."
                             )
                             field_value = hex_data
                     except ValueError:
