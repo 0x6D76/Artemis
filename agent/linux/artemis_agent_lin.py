@@ -23,6 +23,10 @@ AUDIT_MSG_PATTERN = re.compile(r'^type=\w+\s+msg=audit\((\d+\.\d+):(\d+)\):')
 # a double-quoted string (allowing spaces inside) or non-space characters (\S+).
 # It also handles the 'msg=audit(...)` part at the start of the line.
 AUDIT_FIELD_PATTERN = re.compile(r'(\w+)=("[^"]*"|\S+)')
+# List of field names known to commonly contain hex-encoded values
+HEX_ENCODED_FIELDS = ['proctitle', 'comm', 'exe', 'name']
+# Regex to check if a string consists only of hex characters (for decoding heuristics)
+HEX_ONLY_PATTERN = re.compile(r'^[0-9a-fA-F]+$')
 
 
 def SetupLogging (config):
@@ -156,7 +160,7 @@ def ParseAuditdEvent (event_lines):
         parsed_data ["serial_number"] = serial_number
         parsed_data ["timestamp"] = timestamp_str
 
-        #--- Converting auditd timestamp (seconds.milliseconds) to ISO 8601 UTC---
+        # --- Converting auditd timestamp (seconds.milliseconds) to ISO 8601 UTC ---
         try:
             seconds, microseconds = timestamp_str.split ('.')
             # Convert microseconds part to ensure correct precision, pad and trim to 6 digits, if needed
@@ -187,73 +191,78 @@ def ParseAuditdEvent (event_lines):
             logging.warning (f"An unexpected error occurred while processing auditd timestamp '{timestamp_str}' : {e}")
             event_utc_time = timestamp_str
 
-        parsed_data ["event_utc_time"] = event_utc_time
+    parsed_data ["event_utc_time"] = event_utc_time
+    # Process each line in event buffer
+    for line in event_lines:
+        line = line.strip()
+        if not line:
+            continue
 
-        # Process each line in event buffer
-        for line in event_lines:
-            line = line.strip ()
-            if not line:
-                continue
+        # Regex pattern to extract line type (e.g., SYSCALL, CWD, PATH)
+        line_type_match = re.match(r'^type=(\w+)', line)
+        line_type = 'UNKNOWN'  # Default line_type
+        if line_type_match:
+            line_type = line_type_match.group(1)
+            if line_type not in parsed_data["_line_types"]:
+                parsed_data["_line_types"].append(line_type)
 
-            # Regex pattern to extract line type (e.g., SYSCALL, CWD, PATH)
-            line_type_match = re.match (r'^type=(\w+)', line)
-            line_type = 'UNKNOWN' # Default line_type
-            if line_type_match:
-                line_type = line_type_match.group (1)
-                if line_type not in parsed_data["_line_types"]:
-                    parsed_data["_line_types"].append (line_type)
+        # Find the start of the key=value pairs after the msg=audit(...) part
+        data_start_match = AUDIT_MSG_PATTERN.search(line)
+        # Add 1 to end() to skip the colon ':' after the serial number
+        data_start_index = data_start_match.end() + 1 if data_start_match else 0
+        data_string = line[data_start_index:].strip()
+        # Find all key=value pairs in data string using finditer for easier processing
+        field_matches_iter = AUDIT_FIELD_PATTERN.finditer(data_string)
 
-            # Find the start of the key=value pairs after the msg=audit(...) part
-            data_start_match = AUDIT_MSG_PATTERN.search (line)
-            data_start_index = data_start_match.end () if data_start_match else 0
-            data_string = line [data_start_index:].strip ()
-            # Find all key=value pairs in data string
-            field_matches = AUDIT_FIELD_PATTERN.findall (data_string)
+        # Add fields to the parsed_data dictionary, using a simple for loop
+        # Takes care of duplication, where the existing field is replaced with the latest one, if the key match
+        for match in field_matches_iter:
+            field_name = match.group(1)
+            field_value = match.group(2)
 
-            # Add fields to parsed dictionary
-            # Handling duplicates: allowing latest line to overwrite existing entries if keys are the same
-            # To implement: more efficient solution
-            for field_name, field_value in field_matches:
-                # Cleaning up quotes from values
-                if field_value.startswith ('"') and field_value.endswith ('"'):
-                    field_value = field_value [1:-1]
-                # Decode hex-encoded values
-                if field_value.startswith ('hex:') and re.fullmatch (r'hex:[0-9a-fA-F]+', field_value):
-                    try:
-                        # Attempt to decode as utf-8, with bytes as fallback
-                        hex_data = bytes.fromhex (field_value [4:])
+            # Clean up quotes from field_value
+            if field_value.startswith('"') and field_value.endswith('"'):
+                field_value = field_value[1:-1]
 
-                        try:
-                            decoded_value = hex_data.decode ('utf-8', errors = 'replace')
-                            field_value = decoded_value
-                            logging.debug (f"Decoded hex field '{field_name}' : '{field_value}'")
-                        except Exception as e:
-                            logging.warning (
-                                f"Could not decode hex value '{field_value}' as utf-8: {e}. Keeping it as bytes."
-                            )
-                            field_value = hex_data
-                    except ValueError:
-                        logging.warning (f"Could not decode hex value '{field_value}'. Keeping it as original.")
+            # --- Hex Decoding ---
+            if field_name in HEX_ENCODED_FIELDS and len(field_value) > 0 \
+                    and len(field_value) % 2 == 0 and HEX_ONLY_PATTERN.fullmatch(field_value):
+                try:
+                    hex_data = bytes.fromhex(field_value)
+                    field_value = hex_data.decode('utf-8', errors='replace')
+                    logging.debug(f"Decoded hex field '{field_name}' : '{field_value}'")
+                except ValueError as e:
+                    logging.warning(
+                        f"Couldn't decode hex value for '{field_name}' : '{e}'. "
+                        f"Invalid hex format. Keeping the original value '{field_value}'."
+                    )
+                except Exception as e:
+                    logging.warning(
+                        f"An error occurred decoding hex value for the field '{field_name}'. Error: '{e}'. "
+                        f"Keeping the original value '{field_value}'."
+                    )
+            # Add the field using the original auditd field name as the key
+            parsed_data[field_name] = field_value
 
-                # Using original field name as key
-                parsed_data [field_name] = field_value
+    # --- Determine event type based on parsed data ---
+    event_type = "OtherEvent"  # Default
+    syscall_num = parsed_data.get("syscall")
+    rule_key = parsed_data.get("key")
+    line_types = parsed_data.get("_line_types", [])
 
-        # --- Determine a basic event type based on parsed data ---
-        event_type = "OtherEvent"  # Default
-        syscall_num = parsed_data.get("type_SYSCALL", {}).get("syscall")
-        rule_key = parsed_data.get("key")  # 'key' field often indicates rule match\
-        if syscall_num in ["59", "322", "320", "321"]:  # Common execve/execveat syscall numbers
-            event_type = "ProcessCreate"
-        elif rule_key and "artemis_exec" in rule_key:  # Filter based on your auditd rule key
-            event_type = "ProcessCreate"  # Or refine based on specific key meaning
-        elif rule_key and "artemis_file_access" in rule_key:
-            event_type = "FileEvent"
-        elif syscall_num in ["42", "49", "50"]:  # Common socket/connect/accept syscalls
-            event_type = "NetworkEvent"
-        # Add more conditions based on your target techniques and auditd rules/syscalls
+    # Common execve/execveat names and numbers
+    if 'SYSCALL' in line_types and syscall_num in ["59", "320", "321", "322", "execve", "execveat"]:
+        event_type = "ProcessEvent"
+    elif rule_key and "artemis_exec" in rule_key:
+        event_type = "ProcessEvent"
+    # Basic identification of File and Network events
+    # ---> Needs refinement <---
+    if "PATH" in line_types:
+        event_type = "FileEvent"
+    if "SOCKADDR" in line_types:
+        event_type = "NetworkEvent"
 
-        parsed_data["event_type"] = event_type
-
+    parsed_data["event_type"] = event_type
 
     return parsed_data
 
@@ -287,10 +296,10 @@ if __name__ == '__main__':
                     parsed_auditd_events.append (parsed_auditd_event)
             logging.info (f"Finished parsing {len (parsed_auditd_events)} auditd events.")
             # Log a sample to verify parsing
-            logging.info ("Sample of parsed auditd events:")
+            logging.debug ("Sample of parsed auditd events:")
             for i, parsed_event in enumerate (parsed_auditd_events [:3]):  # Log first 3 parsed events
-                logging.info (f"--- Parsed Event {i + 1} ---")
-                logging.info (json.dumps(parsed_event, indent=4))
-                logging.info ("--------------------")
+                logging.debug (f"--- Parsed Event {i + 1} ---")
+                logging.debug (json.dumps(parsed_event, indent=4))
+                logging.debug ("--------------------")
 
         logging.info("Artemis Linux agent is done executing.")
