@@ -37,3 +37,5 @@ The corresponding data sources identified are:
               History files (optional initially).
 
 ---
+## Setup Guide
+The complete setup guide for the platform can be found in [SetupGuide](docs/setup_guide.md).
