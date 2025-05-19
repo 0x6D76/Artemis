@@ -209,7 +209,6 @@ if __name__ == '__main__':
                 parsed_events.append (parsed_event)
 
         logging.info (f"Finished parsing {len (parsed_events)} events.")
-        current_dir = os.path.dirname (os.path.abspath(__file__))
         mapping_file = os.path.join (current_dir, WIN_STD_CONFIG)
         standardized_mapping = LoadMapping (mapping_file)
         standardized_events = []

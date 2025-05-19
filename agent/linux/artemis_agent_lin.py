@@ -11,8 +11,10 @@ import re
 import sys
 from datetime import datetime, timezone, timedelta
 from agent.shared.utils import LoadConfig
+from agent.shared.data_formatter import LoadMapping, StandardizeEvent
 
 LIN_AGENT_CONFIG = 'artemis_agent_lin.ini'
+LIN_STD_CONFIG = 'standardization_map_lin.ini'
 # Using regex to find the start of an auditd message to extract timestamp and serial
 # Example: type=SYSCALL msg=audit(1678886400.000:123):
 # This regex looks for 'type=', then word characters (\w+), spaces (\s+), 'msg=audit(',
@@ -268,14 +270,14 @@ def ParseAuditdEvent (event_lines):
 
 
 if __name__ == '__main__':
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = os.path.join(current_dir, LIN_AGENT_CONFIG)
-    app_config = LoadConfig(config_file)
+    current_dir = os.path.dirname(os.path.abspath (__file__))
+    config_file = os.path.join (current_dir, LIN_AGENT_CONFIG)
+    app_config = LoadConfig (config_file)
 
     if app_config:
         SetupLogging (app_config)
         logging.info ("Artemis Linux agent is up and running.")
-        agent_identity = app_config.get('linux_agent', 'agent_id', fallback="linux-agent-unknown")
+        agent_identity = app_config.get ('linux_agent', 'agent_id', fallback = "linux-agent-unknown")
 
         raw_lines = ReadAuditLog (app_config)
 
@@ -288,18 +290,39 @@ if __name__ == '__main__':
                 for line in event_lines:
                     logging.debug (line)
                 logging.debug ("----------")
-            # Parsing grouped events
-            parsed_auditd_events = []
-            for raw_event_lines in grouped_raw_events:
-                parsed_auditd_event = ParseAuditdEvent (raw_event_lines)
-                if parsed_auditd_event:
-                    parsed_auditd_events.append (parsed_auditd_event)
-            logging.info (f"Finished parsing {len (parsed_auditd_events)} auditd events.")
-            # Log a sample to verify parsing
-            logging.debug ("Sample of parsed auditd events:")
-            for i, parsed_event in enumerate (parsed_auditd_events [:3]):  # Log first 3 parsed events
-                logging.debug (f"--- Parsed Event {i + 1} ---")
-                logging.debug (json.dumps(parsed_event, indent=4))
-                logging.debug ("--------------------")
+
+            #--- Parsing grouped events ---
+            if grouped_raw_events:
+                parsed_auditd_events = []
+                for raw_event in grouped_raw_events:
+                    parsed_event = ParseAuditdEvent (raw_event)
+                    if parsed_event:
+                        parsed_auditd_events.append (parsed_event)
+
+                logging.info (f"Finished parsing {len(parsed_auditd_events)} auditd events.")
+
+                # Log samples to verify parsing
+                logging.debug ("Sample of parsed auditd events:")
+                for i, parsed_event in enumerate (parsed_auditd_events [:3]):  # Log first 3 parsed events
+                    logging.debug(f"--- Parsed Event {i + 1} ---")
+                    logging.debug(json.dumps(parsed_event, indent=4))
+                    logging.debug("--------------------")
+
+                #--- Standardization ---
+                mapping_file = os.path.join (current_dir, LIN_STD_CONFIG)
+                standardized_mapping = LoadMapping (mapping_file)
+                standardized_events = []
+                if standardized_mapping and parsed_auditd_events:
+                    for parsed_event in parsed_auditd_events:
+                        standard_event = StandardizeEvent (parsed_event, agent_identity, standardized_mapping)
+                        if standard_event:
+                            standardized_events.append (standard_event)
+                logging.info (f"Finished standardization of {len(standardized_events)} auditd events.")
+                # Log samples to verify standardization
+                logging.debug ("Sample of standardized auditd events:")
+                for i, event in enumerate (standardized_events[:5]):  # Log first few standardized events
+                    logging.debug (f"--- Standardized Event {i + 1} ---")
+                    logging.debug (json.dumps(event, indent=4))  # Use json.dumps for readable output
+                    logging.debug ("--------------------")
 
         logging.info("Artemis Linux agent is done executing.")

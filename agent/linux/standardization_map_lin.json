@@ -1,0 +1,38 @@
+{
+  "ProcessEvent": {
+    "_action": "execute",
+    "pid": {"standard_field": "process.process_id", "type": "integer"},
+    "ppid": {"standard_field": "process.parent_process_id", "type": "integer"},
+    "comm": {"standard_field": "process.process_name", "type": "string"},
+    "exe": {"standard_field": "process.process_path", "type": "string"},
+    "proctitle": {"standard_field": "process.command_line", "type": "string"},
+    "uid": {"standard_field": "process.uid", "type": "integer"},
+    "auid": {"standard_field": "process.auid", "type": "integer"},
+    "key": {"standard_field": "process.rule_key", "type": "string"},
+    "cwd": {"standard_field": "process.cwd", "type": "string"}
+  },
+
+  "FileEvent": {
+     "_action": "access",
+     "pid": {"standard_field": "process.process_id", "type": "integer"},
+     "comm": {"standard_field": "process.process_name", "type": "string"},
+     "exe": {"standard_field": "process.process_path", "type": "string"},
+     "name": {"standard_field": "file.file_path", "type": "string"},
+     "mode": {"standard_field": "file.access_mode", "type": "string"},
+     "success": {"standard_field": "file.operation_success", "type": "boolean"},
+     "key": {"standard_field": "file.rule_key", "type": "string"}
+  },
+  
+   "NetworkEvent": {
+     "_action": "connect",
+     "pid": {"standard_field": "process.process_id", "type": "integer"},
+     "comm": {"standard_field": "process.process_name", "type": "string"},
+     "exe": {"standard_field": "process.process_path", "type": "string"},
+     "saddr": {"standard_field": "network.sockaddr", "type": "string"},
+     "addr": {"standard_field": "network.remote_address", "type": "string"},
+     "port": {"standard_field": "network.remote_port", "type": "integer"},
+     "protocol": {"standard_field": "network.protocol", "type": "string"},
+     "success": {"standard_field": "network.operation_success", "type": "boolean"},
+     "key": {"standard_field": "network.rule_key", "type": "string"}
+  }
+}
