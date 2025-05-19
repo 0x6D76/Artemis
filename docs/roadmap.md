@@ -29,13 +29,18 @@
 - [x] On Linux, develop code to read from ```auditd```.
 - [ ] Implement basic parsing logic for log entries, to extract key information, such as timestamp, user, event type, 
       process ID and other relevant parameters.
+- [ ] Structure the collected log data into a consistent, easily parsable format i.e., Artemis JSON schema
 
-## <i>Step 4: Implement Process Monitoring</i>
-- [ ] Develop functionality to list running processes, their parent processes, command lines, and potentially process 
-      hashes.
+## <i>Step 4: Implement Process Monitoring and Analysis</i>
+- [ ] Develop functionality to collect more detailed process information: process integrity level (Windows), 
+      capabilities/effective user ID (Linux), command line arguments (crucial!), parent-child process relationships, 
+      loaded modules/libraries.
 - [ ] Implement monitoring for new process creation and process termination events.
+- [ ] Implement monitoring for process injection attempts (detecting suspicious parent-child relationships or processes 
+      running from unusual directories).
+- [ ] Calculate the hash of executed processes (e.g., MD5, SHA256) for threat intelligence correlation later.
 
-## <i>Step 5: Implement Basic Persistence Monitoring (Initial Set)</i>
+## <i>Step 5: Implement Persistence Monitoring</i>
 - [ ] On Windows, focus on monitoring key Windows Registry Run keys, Startup folders, and potentially WMI event 
       consumers.
 - [ ] On Linux, focus on monitoring common persistence locations like ```/etc/rc.local```, systemd services, 
@@ -43,6 +48,7 @@
 
 ## <i>Step 6: Agent-to-Server Communication</i>
 - [ ] Choose a communication protocol.
+- [ ] Implement basic data compression for transmission to reduce bandwidth usage.
 - [ ] Implement secure communication between agent(s) and server.
 - [ ] Develop a simple data format for sending collected events from the agent to the server.
 
@@ -52,8 +58,12 @@
 
 ## <i>Step 7: Data Ingestion and Aggregation</i>
 - [ ] Build the server-side component to receive data from the agents.
-- [ ] Implement logic to parse the incoming data and store it in the chosen database.
-- [ ] Design the database schema to efficiently store and query the collected security events.
+- [ ] Implement a robust parsing and validation layer for incoming agent data based on Artemis JSON schema. 
+      Handle malformed data gracefully.
+- [ ] Integrate with the chosen message queue to handle bursts of data and decouple the ingestion from the processing.
+- [ ] Develop workers or consumers that read from the message queue (or directly from the ingestion layer) and process 
+      the data before storing it. This processing might include basic field enrichment or initial filtering.
+- [ ]  Implement efficient writing of the processed data into the database and index them for faster searching.
 
 ## <i>Step 8: Implement Initial Detection Logic</i>
 - [ ] Develop rules or simple algorithms on the server to identify the suspicious activities defined in <i>Step 1</i>
@@ -61,28 +71,37 @@
   - [ ] Matching on specific event IDs and patterns.
   - [ ] Identifying processes running from unusual locations.
   - [ ] Flagging modifications to persistence locations.
+  - [ ] Correlating multiple events (e.g., a process creation followed by a registry modification in a persistence key, 
+        or a suspicious process initiating an outbound network connection).
+- [ ] Implement simple stateful analysis (e.g., tracking process lineage).
+- [ ] Develop a flexible rule engine or structure that allows adding new detection rules easily.
 - [ ] Implement an alerting mechanism when a detection rule is triggered (e.g., print to console, send to a log file 
       the server is monitoring, or integrate with a simple notification system).
 
 ## <i>Step 9: Integrate Threat Intelligence</i>
 - [ ] Research and identify a free or open-source threat intelligence feed (e.g., abuse.ch, AlienVault OTX).
-- [ ] Develop functionality on the server to ingest data from the threat intelligence feed.
+- [ ] Automate the process of fetching updates from the chosen threat intelligence feed(s). Implement error handling 
+      for feed ingestion.
 - [ ] Implement correlation logic to check if any collected events or indicators (process hashes, IP addresses, 
       domain names) match entries in the threat intelligence feed.
+- [ ] Implement a mechanism to flag or enrich events in the database that correlate with threat intelligence 
+      indicators.
 
 ---
 
 # <b><u>Phase 4: Advanced Features and Visualization</b></u>
 
-## <i>Step 10: Implement Anomaly Detection (Basic)</i>
+## <i>Step 10: Implement Contextual Anomaly Detection (Basic)</i>
 - [ ] Choose a specific type of anomalous behavior to detect (e.g., a process running from a directory it normally 
       doesn't, unusual network connections for a specific process, a user logging in at an unusual time).
-- [ ] Explore simple anomaly detection techniques (e.g., statistical analysis of frequency, 
+- [ ] Explore slightly advanced anomaly detection techniques (e.g., statistical analysis of frequency, 
       simple behavioral profiling).
-- [ ] Implement the chosen anomaly detection logic on the server and flag potential anomalies.
+- [ ] Integrate anomaly flagging into data processing pipeline and database.
 
 ## <i>Step 11: Set up Prometheus for Metrics Collection</i>
 - [ ] Install and configure Prometheus on the server VM.
+- [ ] Ensure Prometheus is collecting metrics from your server components (data ingestion rate, processing speed, 
+      database write latency, number of detections triggered).
 - [ ] Modify the agent and server components to expose relevant metrics (e.g., number of events collected, 
       processing time, number of detections) in a format Prometheus can scrape.
 
@@ -97,6 +116,7 @@
 - [ ] Design a secure command and control mechanism for the server to send basic commands to the agent 
       (e.g., retrieve a file, terminate a process)
 - [ ] Implement the agent-side functionality to receive and execute these commands securely.
+- [ ] Implement logging of all commands sent to agents and their execution status.
 
 ---
 

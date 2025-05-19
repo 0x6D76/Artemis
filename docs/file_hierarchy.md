@@ -56,5 +56,5 @@ artemis/
 │   │   └── execute_persistence_technique.ps1 # Example simulation script
 │   └── linux/
 │       └── simulate_c2_beacon.sh # Example simulation script
-└── README.md    # Main project README (can link to docs/README.md)
+└── README.md    # Main project README 
 ```
