@@ -45,14 +45,14 @@
     "success": { "standard_field": "action_status", "type": "string" },
     "exit": { "standard_field": "action_exit_code", "type": "integer" },
     "key": { "standard_field": "rule_key", "type": "string" },
-    "saddr": { "standard_field": "network.sockaddr_raw", "type": "string" }, # Raw sockaddr string/hex
-    "addr": { "standard_field": "network.remote_address", "type": "string" }, # IP address from SOCKADDR/connection events
-    "port": { "standard_field": "network.remote_port", "type": "integer" } # Port from SOCKADDR/connection events
+    "saddr": { "standard_field": "network.sockaddr_raw", "type": "string" },
+    "addr": { "standard_field": "network.remote_address", "type": "string" },
+    "port": { "standard_field": "network.remote_port", "type": "integer" }
   },
 
   "OtherEvent": {
     "_event_type": "OtherEvent",
     "_action": "unspecified",
-    "type": { "standard_field": "auditd_type", "type": "string" } # Example: map DAEMON_START's type
+    "type": { "standard_field": "auditd_type", "type": "string" }
   }
 }
