@@ -14,6 +14,15 @@ import win32evtlog
 import win32evtlogutil
 import win32con
 import xml.etree.ElementTree as ET
+# Get the absolute path of the directory containing the script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the absolute path of the project root (assuming it's two levels up)
+project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+# Add the project root to sys.path
+# Insert at the beginning (index 0) so it's checked first
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from agent.shared.utils import LoadConfig
 from agent.shared.data_formatter import LoadMapping, StandardizeEvent
 

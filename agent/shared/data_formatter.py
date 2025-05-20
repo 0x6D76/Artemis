@@ -148,15 +148,30 @@ def StandardizeEvent (parsed_event, agent_id, mapping):
                 logging.debug (f"Standardization: No direct mapping found for {original_field_name}")
 
     # Formatting timestamp
-    timestamp_str = parsed_event.get ("timestamp")
-    if timestamp_str:
+    # Prioritize 'event_utc_time' which should already be in ISO 8601 format (from both Windows and Linux parsers)
+    if parsed_event.get ("event_utc_time"):
+        standard_event ["event_timestamp"] = parsed_event ["event_utc_time"]
+    # Fallback to 'timestamp' field, handling both epoch and potential ISO string formats
+    elif parsed_event.get ("timestamp"):
         try:
-            standard_event["event_timestamp"] = timestamp_str
-            dt_obj = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-            standard_event["event_timestamp"] = dt_obj.isoformat(timespec='microseconds')
+            timestamp_val = parsed_event ["timestamp"]
+            # Check if it's an epoch timestamp (numeric string or actual number)
+            if isinstance (timestamp_val, (int, float)):
+                dt_obj = datetime.fromtimestamp (timestamp_val, tz=timezone.utc)
+                standard_event ["event_timestamp"] = dt_obj.isoformat (timespec='microseconds')
+            elif isinstance (timestamp_val, str) and timestamp_val.replace ('.', '', 1).isdigit ():
+                epoch_float = float (timestamp_val)
+                dt_obj = datetime.fromtimestamp (epoch_float, tz=timezone.utc)
+                standard_event ["event_timestamp"] = dt_obj.isoformat (timespec='microseconds')
+            else:
+                # Assume it's an ISO-like string that might need minor cleanup (e.g., 'Z' to '+00:00')
+                dt_obj = datetime.fromisoformat (timestamp_val.replace ('Z', '+00:00'))
+                standard_event ["event_timestamp"] = dt_obj.isoformat (timespec='microseconds')
         except Exception as e:
-            logging.error (f"Couldn't standardize timestamp: {e}")
-            standard_event ["event_timestamp"] = timestamp_str
+            logging.error (f"Couldn't standardize timestamp '{parsed_event.get ('timestamp')}': {e}")
+            standard_event ["event_timestamp"] = parsed_event ["timestamp"]  # Fallback to original raw string on error
+    else:
+        standard_event ["event_timestamp"] = None  # No timestamp field found
 
     # Remove fields that have been explicitly mapped from other_data
     if event_mapping:
