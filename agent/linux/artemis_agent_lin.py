@@ -14,7 +14,7 @@ from agent.shared.utils import LoadConfig
 from agent.shared.data_formatter import LoadMapping, StandardizeEvent
 
 LIN_AGENT_CONFIG = 'artemis_agent_lin.ini'
-LIN_STD_CONFIG = 'standardization_map_lin.ini'
+LIN_STD_CONFIG = 'standardization_map_lin.json'
 # Using regex to find the start of an auditd message to extract timestamp and serial
 # Example: type=SYSCALL msg=audit(1678886400.000:123):
 # This regex looks for 'type=', then word characters (\w+), spaces (\s+), 'msg=audit(',
@@ -252,7 +252,35 @@ def ParseAuditdEvent (event_lines):
     rule_key = parsed_data.get("key")
     line_types = parsed_data.get("_line_types", [])
 
-    # Common execve/execveat names and numbers
+    # Process Creation Detection
+    # Check for common execve/execveat syscall numbers
+    # Common execve: 59 (x86_64), 221 (i386)
+    # Common execveat: 322 (x86_64)
+    # Check for 'execve' in comm or exe, or presence of PROCTITLE
+    if "SYSCALL" in line_types and syscall_num in ["59", "221", "322"]:
+        if "PROCTITLE" in line_types or parsed_data.get("comm") == "auditctl" or parsed_data.get(
+                "exe") == "/usr/sbin/auditctl":  # Heuristic for exec
+            event_type = "ProcessEvent"
+    elif rule_key and ("exec" in rule_key or "process_create" in rule_key):  # If you use specific audit rules
+        event_type = "ProcessEvent"
+
+    # File Event Detection
+    # Common file-related syscalls: open (2), read (0), write (1), close (3), chmod (90), chown (92)
+    if "SYSCALL" in line_types and syscall_num in ["0", "1", "2", "3", "90", "92", "257","262"]:
+        if "PATH" in line_types:
+            event_type = "FileEvent"
+    elif rule_key and ("file_access" in rule_key or "file_mod" in rule_key):
+        event_type = "FileEvent"
+
+    # Network Event Detection
+    # Common network-related syscalls: socket (41), connect (42), accept (43), bind (49), listen (50)
+    if "SYSCALL" in line_types and syscall_num in ["41", "42", "43", "49", "50"]:
+        if "SOCKADDR" in line_types:
+            event_type = "NetworkEvent"
+    elif rule_key and ("net_conn" in rule_key or "socket_op" in rule_key):
+        event_type = "NetworkEvent"
+
+    '''# Common execve/execveat names and numbers
     if 'SYSCALL' in line_types and syscall_num in ["59", "320", "321", "322", "execve", "execveat"]:
         event_type = "ProcessEvent"
     elif rule_key and "artemis_exec" in rule_key:
@@ -262,7 +290,7 @@ def ParseAuditdEvent (event_lines):
     if "PATH" in line_types:
         event_type = "FileEvent"
     if "SOCKADDR" in line_types:
-        event_type = "NetworkEvent"
+        event_type = "NetworkEvent"'''
 
     parsed_data["event_type"] = event_type
 

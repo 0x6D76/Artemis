@@ -74,12 +74,11 @@ def StandardizeEvent (parsed_event, agent_id, mapping):
 
     # Create base standardized base event structure
     standard_event = CreateBaseStandardEvent (parsed_event, agent_id)
-    original_event_id = parsed_event.get ("event_id")
-    # Get mapping for the current event
-    event_mapping = mapping.get (original_event_id)
+    mapping_key= parsed_event.get ("event_type")
+    event_mapping = mapping.get (mapping_key)
 
     if not event_mapping:
-        logging.error (f"No mapping found for Event ID: {original_event_id}")
+        logging.error (f"No mapping found for event type {mapping_key}. Marking it as 'UnmappedEvent'.")
         standard_event ["other_data"] = parsed_event
         standard_event ["standard_event_type"] = "UnmappedEvent"
         return standard_event

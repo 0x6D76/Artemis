@@ -1,38 +1,58 @@
 {
   "ProcessEvent": {
-    "_action": "execute",
-    "pid": {"standard_field": "process.process_id", "type": "integer"},
-    "ppid": {"standard_field": "process.parent_process_id", "type": "integer"},
-    "comm": {"standard_field": "process.process_name", "type": "string"},
-    "exe": {"standard_field": "process.process_path", "type": "string"},
-    "proctitle": {"standard_field": "process.command_line", "type": "string"},
-    "uid": {"standard_field": "process.uid", "type": "integer"},
-    "auid": {"standard_field": "process.auid", "type": "integer"},
-    "key": {"standard_field": "process.rule_key", "type": "string"},
-    "cwd": {"standard_field": "process.cwd", "type": "string"}
+    "_event_type": "ProcessEvent",
+    "_action": "create",
+    "pid": { "standard_field": "process.process_id", "type": "integer" },
+    "ppid": { "standard_field": "process.parent_process_id", "type": "integer" },
+    "comm": { "standard_field": "process.process_name", "type": "string" },
+    "exe": { "standard_field": "process.executable_path", "type": "string" },
+    "proctitle": { "standard_field": "process.command_line", "type": "string" },
+    "uid": { "standard_field": "process.uid", "type": "integer" },
+    "auid": { "standard_field": "process.auid", "type": "integer" },
+    "cwd": { "standard_field": "process.cwd", "type": "string" },
+    "syscall": { "standard_field": "process.syscall_number", "type": "integer" },
+    "success": { "standard_field": "action_status", "type": "string" },
+    "exit": { "standard_field": "action_exit_code", "type": "integer" },
+    "key": { "standard_field": "rule_key", "type": "string" },
+    "name": { "standard_field": "file.path", "type": "string" }
   },
 
   "FileEvent": {
-     "_action": "access",
-     "pid": {"standard_field": "process.process_id", "type": "integer"},
-     "comm": {"standard_field": "process.process_name", "type": "string"},
-     "exe": {"standard_field": "process.process_path", "type": "string"},
-     "name": {"standard_field": "file.file_path", "type": "string"},
-     "mode": {"standard_field": "file.access_mode", "type": "string"},
-     "success": {"standard_field": "file.operation_success", "type": "boolean"},
-     "key": {"standard_field": "file.rule_key", "type": "string"}
+    "_event_type": "FileEvent",
+    "_action": "access",
+    "pid": { "standard_field": "process.process_id", "type": "integer" },
+    "comm": { "standard_field": "process.process_name", "type": "string" },
+    "exe": { "standard_field": "process.executable_path", "type": "string" },
+    "uid": { "standard_field": "process.uid", "type": "integer" },
+    "auid": { "standard_field": "process.auid", "type": "integer" },
+    "syscall": { "standard_field": "file.syscall_number", "type": "integer" },
+    "success": { "standard_field": "action_status", "type": "string" },
+    "exit": { "standard_field": "action_exit_code", "type": "integer" },
+    "key": { "standard_field": "rule_key", "type": "string" },
+    "name": { "standard_field": "file.path", "type": "string" },
+    "nametype": { "standard_field": "file.path_type", "type": "string" }
   },
-  
-   "NetworkEvent": {
-     "_action": "connect",
-     "pid": {"standard_field": "process.process_id", "type": "integer"},
-     "comm": {"standard_field": "process.process_name", "type": "string"},
-     "exe": {"standard_field": "process.process_path", "type": "string"},
-     "saddr": {"standard_field": "network.sockaddr", "type": "string"},
-     "addr": {"standard_field": "network.remote_address", "type": "string"},
-     "port": {"standard_field": "network.remote_port", "type": "integer"},
-     "protocol": {"standard_field": "network.protocol", "type": "string"},
-     "success": {"standard_field": "network.operation_success", "type": "boolean"},
-     "key": {"standard_field": "network.rule_key", "type": "string"}
+
+  "NetworkEvent": {
+    "_event_type": "NetworkEvent",
+    "_action": "network_action",
+    "pid": { "standard_field": "process.process_id", "type": "integer" },
+    "comm": { "standard_field": "process.process_name", "type": "string" },
+    "exe": { "standard_field": "process.executable_path", "type": "string" },
+    "uid": { "standard_field": "process.uid", "type": "integer" },
+    "auid": { "standard_field": "process.auid", "type": "integer" },
+    "syscall": { "standard_field": "network.syscall_number", "type": "integer" },
+    "success": { "standard_field": "action_status", "type": "string" },
+    "exit": { "standard_field": "action_exit_code", "type": "integer" },
+    "key": { "standard_field": "rule_key", "type": "string" },
+    "saddr": { "standard_field": "network.sockaddr_raw", "type": "string" }, # Raw sockaddr string/hex
+    "addr": { "standard_field": "network.remote_address", "type": "string" }, # IP address from SOCKADDR/connection events
+    "port": { "standard_field": "network.remote_port", "type": "integer" } # Port from SOCKADDR/connection events
+  },
+
+  "OtherEvent": {
+    "_event_type": "OtherEvent",
+    "_action": "unspecified",
+    "type": { "standard_field": "auditd_type", "type": "string" } # Example: map DAEMON_START's type
   }
 }
