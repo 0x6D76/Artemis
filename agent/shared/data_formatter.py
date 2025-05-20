@@ -52,7 +52,7 @@ def CreateBaseStandardEvent (parsed_event, agent_id):
         source = "sysmon"
     return {
         "agent_id": agent_id,
-        "event_timestamp": None,  # Will be formatted in StandardizeEvent
+        "event_timestamp": parsed_event.get("event_utc_time", parsed_event.get("timestamp")), # Prioritize event_utc_time
         "hostname": parsed_event.get ("hostname"),
         "os": os,
         "event_source": source, # parsed_event.get ("event_source"), Get source from parsed data (to be added)
@@ -76,6 +76,8 @@ def StandardizeEvent (parsed_event, agent_id, mapping):
     standard_event = CreateBaseStandardEvent (parsed_event, agent_id)
     mapping_key= parsed_event.get ("event_type")
     event_mapping = mapping.get (mapping_key)
+
+    temp_other_data = parsed_event.copy()
 
     if not event_mapping:
         logging.error (f"No mapping found for event type {mapping_key}. Marking it as 'UnmappedEvent'.")
@@ -163,12 +165,36 @@ def StandardizeEvent (parsed_event, agent_id, mapping):
         for original_field, mapping_info in event_mapping.items ():
             if original_field.startswith ("_"):  # Skip metadata like _event_type, _action
                 continue
-            if original_field in standard_event ["other_data"]:
-                del standard_event ["other_data"] [original_field]
-        # Also remove event_id and event_type from other_data if they are not explicitly mapped
-        if "event_id" in standard_event ["other_data"]:
-            del standard_event ["other_data"] ["event_id"]
-        if "event_type" in standard_event ["other_data"]:
-            del standard_event ["other_data"] ["event_type"]
+            if original_field in temp_other_data:
+                del temp_other_data [original_field]
+        # Also explicitly remove common top-level fields that are mapped
+        for key in ["event_type", "event_id", "os", "event_source", "hostname", "timestamp", "event_utc_time",
+                    "rule_key", "action", "action_status", "action_exit_code"]:
+            if key in temp_other_data:
+                del temp_other_data [key]
+
+        # Specific Linux fields that are often mapped or used to derive mapped fields
+        if parsed_event.get("os") == "linux":
+            # Linux auditd specific fields we know we're mapping or derive from
+            linux_specific_keys_to_remove = [
+                "arch", "syscall", "success", "exit", "a0", "a1", "a2", "a3",
+                "items", "ppid", "pid", "auid", "uid", "gid", "euid", "suid",
+                "fsuid", "egid", "sgid", "fsgid", "tty", "ses", "comm", "exe",
+                "subj", "key", "original_raw_lines", "_line_types", "serial_number",
+                "argc", "item", "name", "inode", "dev", "mode", "ouid", "ogid",
+                "rdev", "nametype", "cap_fp", "cap_fi", "cap_fe", "cap_fver",
+                "cap_frootid", "proctitle", "cwd",
+                # Fields from the auditd parser that are now mapped (e.g., in process.*, file.*)
+                "AUDIT_ARCH", "AUDIT_SYSCALL", "AUID", "UID", "GID", "EUID", "SUID",
+                "FSUID", "EGID", "SGID", "FSGID", "TTY", "SES", "COMM", "EXE",
+                "SUBJ", "KEY", "PROCTITLE", "CWD", "PATH"
+                # These are line types, but also might be parsed field names
+            ]
+            for key in linux_specific_keys_to_remove:
+                if key in temp_other_data:
+                    del temp_other_data[key]
+
+    # Assign the remaining fields in temp_other_data to standard_event["other_data"]
+    standard_event["other_data"] = temp_other_data
 
     return standard_event
