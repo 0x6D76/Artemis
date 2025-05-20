@@ -1,5 +1,5 @@
 {
-  "1": {
+  "ProcessCreate": {
     "_event_type": "ProcessEvent",
     "_action": "create",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
@@ -15,7 +15,7 @@
     "IntegrityLevel": { "standard_field": "process.integrity_level", "type": "string" }
   },
 
-  "3": {
+  "NetworkConnect": {
     "_event_type": "NetworkEvent",
     "_action": "connect",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
@@ -32,7 +32,7 @@
     "DestinationPort": { "standard_field": "network.destination_port", "type": "integer"}
   },
 
-  "5": {
+  "ProcessTermination": {
     "_event_type": "ProcessEvent",
     "_action": "terminate",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
@@ -41,7 +41,7 @@
     "Image": { "standard_field": "process.process_name", "type": "string" }
   },
 
-  "7": {
+  "ImageLoaded": {
     "_event_type": "ImageEvent",
     "_action": "Loaded",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
@@ -55,7 +55,7 @@
     "SignatureStatus": { "standard_field": "image.signature_status", "type": "string" }
   },
 
-  "10": {
+  "ProcessAccess": {
     "_event_type": "ProcessEvent",
     "_action": "access",
     "SourceProcessGuid": { "standard_field": "process.source_process_guid", "type": "string" },
@@ -67,7 +67,7 @@
     "GrantedAccess": { "standard_field": "process.access_granted", "type": "string"}
   },
 
-  "11": {
+  "FileCreate": {
     "_event_type": "FileEvent",
     "_action": "create",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
@@ -77,17 +77,18 @@
     "TargetFilename": { "standard_field": "file.file_path", "type": "string" }
   },
 
-  "12": {
+  "RegistryObjectChange": {
     "_event_type": "RegistryEvent",
     "_action": "key_add_delete",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.process_name", "type": "string" },
-    "TargetObject": { "standard_field": "registry.key_path", "type": "string" }
+    "TargetObject": { "standard_field": "registry.key_path", "type": "string" },
+    "RuleName": { "standard_field": "rule_key", "type": "string" }
   },
 
-  "13": {
+  "RegistryValueSet": {
     "_event_type": "RegistryEvent",
     "_action": "key_set",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
@@ -95,10 +96,11 @@
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.process_name", "type": "string" },
     "TargetObject": { "standard_field": "registry.key_path", "type": "string" },
-    "Details": { "standard_field": "registry.key_value", "type": "string" }
+    "Details": { "standard_field": "registry.key_value", "type": "string" },
+    "RuleName": { "standard_field": "rule_key", "type": "string" }
   },
 
-  "14": {
+  "RegistryObjectRenamed": {
     "_event_type": "RegistryEvent",
     "_action": "key_rename",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
@@ -106,10 +108,11 @@
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.process_name", "type": "string" },
     "TargetObject": { "standard_field": "registry.key_path", "type": "string" },
-    "NewName": { "standard_field": "registry.new_key_path", "type": "string" }
+    "NewName": { "standard_field": "registry.new_key_path", "type": "string" },
+    "RuleName": { "standard_field": "rule_key", "type": "string" }
   },
 
-  "23": {
+  "FileDelete": {
     "_event_type": "FileEvent",
     "_action": "delete_archived",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
@@ -123,7 +126,7 @@
 
   },
 
-  "26": {
+  "FileDeleteDetected": {
     "_event_type": "FileEvent",
     "_action": "delete_detected",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
@@ -133,5 +136,11 @@
     "TargetFilename": { "standard_field": "file.file_path", "type": "string" },
     "Hashes": { "standard_field": "file.hashes", "type": "string" },
     "IsExecutable": { "standard_field": "file.is_executable", "type": "boolean" }
+  },
+
+  "OtherSysmonEvent": {
+    "_event_type": "OtherSysmonEvent",
+    "_action": "unspecified"
   }
+
 }

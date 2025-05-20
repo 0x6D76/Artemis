@@ -172,8 +172,12 @@ def ParseEventData (event):
             event_data ["event_type"] = "ImageLoaded"
         elif event_id == '11':  # FileCreate
             event_data ["event_type"] = "FileCreate"
-        elif event_id in ['12', '13', '14']:  # RegistryEvent
-            event_data ["event_type"] = "RegistryEvent"
+        elif event_id == '12':  # Registry object added or deleted
+            event_data["event_type"] = "RegistryObjectChange"
+        elif event_id == '13':  # Registry value set
+            event_data["event_type"] = "RegistryValueSet"
+        elif event_id == '14':  # Registry object renamed
+            event_data["event_type"] = "RegistryObjectRenamed"
         elif event_id == '23':  # FileDelete
             event_data ["event_type"] = "FileDelete"
         elif event_id == '26': # FileDeleteDetected

@@ -280,18 +280,6 @@ def ParseAuditdEvent (event_lines):
     elif rule_key and ("net_conn" in rule_key or "socket_op" in rule_key):
         event_type = "NetworkEvent"
 
-    '''# Common execve/execveat names and numbers
-    if 'SYSCALL' in line_types and syscall_num in ["59", "320", "321", "322", "execve", "execveat"]:
-        event_type = "ProcessEvent"
-    elif rule_key and "artemis_exec" in rule_key:
-        event_type = "ProcessEvent"
-    # Basic identification of File and Network events
-    # ---> Needs refinement <---
-    if "PATH" in line_types:
-        event_type = "FileEvent"
-    if "SOCKADDR" in line_types:
-        event_type = "NetworkEvent"'''
-
     parsed_data["event_type"] = event_type
 
     return parsed_data

@@ -156,4 +156,19 @@ def StandardizeEvent (parsed_event, agent_id, mapping):
             logging.error (f"Couldn't standardize timestamp: {e}")
             standard_event ["event_timestamp"] = timestamp_str
 
+    # Remove fields that have been explicitly mapped from other_data
+    if event_mapping:
+        # Remove top-level parsed fields that are now mapped to standardized fields
+        # This requires iterating through the mapping and deleting from other_data
+        for original_field, mapping_info in event_mapping.items ():
+            if original_field.startswith ("_"):  # Skip metadata like _event_type, _action
+                continue
+            if original_field in standard_event ["other_data"]:
+                del standard_event ["other_data"] [original_field]
+        # Also remove event_id and event_type from other_data if they are not explicitly mapped
+        if "event_id" in standard_event ["other_data"]:
+            del standard_event ["other_data"] ["event_id"]
+        if "event_type" in standard_event ["other_data"]:
+            del standard_event ["other_data"] ["event_type"]
+
     return standard_event
