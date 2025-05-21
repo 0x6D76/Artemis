@@ -105,7 +105,8 @@ def GroupAuditdLines (raw_lines):
             timestamp_str = match.group (1)
             serial_number = match.group (2)
             # Checking if this is a new event (different serial or different timestamp)
-            if current_event_serial is not None and (serial_number != current_event_serial or timestamp_str != current_event_timestamp):
+            if current_event_serial is not None and (
+                    serial_number != current_event_serial or timestamp_str != current_event_timestamp):
                 if current_event_lines:
                     grouped_events.append (current_event_lines)
                 # Start a new event buffer with current line

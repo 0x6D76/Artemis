@@ -49,5 +49,6 @@ Standardized Data Format
     terminates a process - with extreme caution and proper authorization). 
   - Returns the result to the Remote Command Receiver.
 
+---
 
 ## Artemis Agent

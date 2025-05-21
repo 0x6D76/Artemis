@@ -27,9 +27,9 @@
 - [x] On Windows, develop code to interface with and consume Sysmon events, focussing on reading relevant security 
       channels.
 - [x] On Linux, develop code to read from ```auditd```.
-- [ ] Implement basic parsing logic for log entries, to extract key information, such as timestamp, user, event type, 
+- [x] Implement basic parsing logic for log entries, to extract key information, such as timestamp, user, event type, 
       process ID and other relevant parameters.
-- [ ] Structure the collected log data into a consistent, easily parsable format i.e., Artemis JSON schema
+- [x] Structure the collected log data into a consistent, easily parsable format i.e., Artemis JSON schema
 
 ## <i>Step 4: Implement Process Monitoring and Analysis</i>
 - [ ] Develop functionality to collect more detailed process information: process integrity level (Windows), 

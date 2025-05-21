@@ -7,8 +7,8 @@
     "ParentProcessId": { "standard_field": "process.parent_process_id", "type": "string" },
     "ParentProcessGuid": { "standard_field": "process.parent_process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string" },
-    "Image": { "standard_field": "process.process_name", "type": "string" },
-    "ParentImage": { "standard_field": "process.parent_process_name", "type": "string" },
+    "Image": { "standard_field": "process.executable_path", "type": "string" },
+    "ParentImage": { "standard_field": "process.parent_executable_path", "type": "string" },
     "CommandLine": { "standard_field": "process.command_line", "type": "string" },
     "ParentCommandLine": { "standard_field": "process.parent_command_line", "type": "string" },
     "Hashes": { "standard_field": "process.hash", "type": "string" },
@@ -21,7 +21,7 @@
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string" },
-    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "Image": { "standard_field": "process.executable_path", "type": "string" },
     "Protocol": { "standard_field": "network.protocol", "type": "string" },
     "Initiated": { "standard_field":  "network.initiated", "type":  "boolean" },
     "SourceIsIpv6": { "standard_file": "network.is_source_ipv6", "type": "boolean" },
@@ -38,7 +38,7 @@
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
-    "Image": { "standard_field": "process.process_name", "type": "string" }
+    "Image": { "standard_field": "process.executable_path", "type": "string" }
   },
 
   "ImageLoaded": {
@@ -46,7 +46,7 @@
     "_action": "Loaded",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
-    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "Image": { "standard_field": "process.executable_path", "type": "string" },
     "Hashes": { "standard_field": "process.hash", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
     "ImageLoaded": { "standard_field": "image.path", "type": "string" },
@@ -60,10 +60,10 @@
     "_action": "access",
     "SourceProcessGuid": { "standard_field": "process.source_process_guid", "type": "string" },
     "SourceProcessId": { "standard_field": "process.source_process_id", "type": "string" },
-    "SourceImage": { "standard_field": "process.source_process_name", "type": "string" },
+    "SourceImage": { "standard_field": "process.source_executable_path", "type": "string" },
     "DestinationProcessGuid": { "standard_field": "process.destination_process_guid", "type": "string" },
     "DestinationProcessId": { "standard_field": "process.destination_process_id", "type": "string" },
-    "DestinationImage": { "standard_field": "process.destination_process_name", "type": "string" },
+    "DestinationImage": { "standard_field": "process.destination_executable_path", "type": "string" },
     "GrantedAccess": { "standard_field": "process.access_granted", "type": "string"}
   },
 
@@ -73,40 +73,40 @@
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
-    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "Image": { "standard_field": "process.executable_path", "type": "string" },
     "TargetFilename": { "standard_field": "file.path", "type": "string" }
   },
 
   "RegistryObjectChange": {
-    "_event_type": "RegistryEvent",
+    "_event_type": "RegistryObjectChange",
     "_action": "object_modified",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
-    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "Image": { "standard_field": "process.executable_path", "type": "string" },
     "TargetObject": { "standard_field": "registry.key_path", "type": "string" },
     "RuleName": { "standard_field": "rule_key", "type": "string" }
   },
 
   "RegistryValueSet": {
-    "_event_type": "RegistryEvent",
+    "_event_type": "RegistryValueSet",
     "_action": "object_set",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
-    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "Image": { "standard_field": "process.executable_path", "type": "string" },
     "TargetObject": { "standard_field": "registry.key_path", "type": "string" },
     "Details": { "standard_field": "registry.key_value", "type": "string" },
     "RuleName": { "standard_field": "rule_key", "type": "string" }
   },
 
   "RegistryObjectRenamed": {
-    "_event_type": "RegistryEvent",
+    "_event_type": "RegistryObjectRenamed",
     "_action": "object_rename",
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
-    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "Image": { "standard_field": "process.executable_path", "type": "string" },
     "TargetObject": { "standard_field": "registry.key_path", "type": "string" },
     "NewName": { "standard_field": "registry.new_key_path", "type": "string" },
     "RuleName": { "standard_field": "rule_key", "type": "string" }
@@ -118,7 +118,7 @@
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
-    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "Image": { "standard_field": "process.executable_path", "type": "string" },
     "TargetFilename": { "standard_field": "file.path", "type": "string" },
     "Hashes": { "standard_field": "file.hashes", "type": "string" },
     "IsExecutable": { "standard_field": "file.is_executable", "type": "boolean" },
@@ -132,7 +132,7 @@
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "User": { "standard_field": "process.user", "type": "string"},
-    "Image": { "standard_field": "process.process_name", "type": "string" },
+    "Image": { "standard_field": "process.executable_path", "type": "string" },
     "TargetFilename": { "standard_field": "file.path", "type": "string" },
     "Hashes": { "standard_field": "file.hashes", "type": "string" },
     "IsExecutable": { "standard_field": "file.is_executable", "type": "boolean" }

@@ -120,9 +120,11 @@ def CollectRawWindowsEvents (config):
         if handle:
             try:
                 if hasattr (handle, 'close'):
+                    # Attempt to use a .close() method, if it exists
                     handle.close ()
                     logging.info ("Closed event log handle using close ().")
                 else:
+                    # If no .close() method, try win32api.CloseHandle
                     win32api.CloseHandle (handle)
                     logging.info ("Closed event log handle using win32api.")
             except Exception as e:
@@ -134,8 +136,9 @@ def CollectRawWindowsEvents (config):
 
 def ParseEventData (event):
     """Extract relevant information from the given event using XML parsing."""
-    # win32evtlog.EvtRender returns output in bytes, decode it into XML data
-    xml_data = win32evtlog.EvtRender (event, win32evtlog.EvtRenderEventXml) #.decode ('utf-8')
+
+    # Format event log into XML data
+    xml_data = win32evtlog.EvtRender (event, win32evtlog.EvtRenderEventXml)
 
     try:
         root = ET.fromstring (xml_data)
@@ -222,6 +225,11 @@ if __name__ == '__main__':
                 parsed_events.append (parsed_event)
 
         logging.info (f"Finished parsing {len (parsed_events)} events.")
+        # Validating parsing logic
+        logging.debug (f"Sample of parsed events:")
+        for i, event in enumerate (parsed_events):
+            logging.debug (f"Event {i+1}:\n{json.dumps (event, indent=4)}")
+
         mapping_file = os.path.join (current_dir, WIN_STD_CONFIG)
         standardized_mapping = LoadMapping (mapping_file)
         standardized_events = []
