@@ -33,7 +33,7 @@
 
 ## <i>Step 4: Implement Process Monitoring and Analysis</i>
 - [ ] Develop functionality to collect more detailed process information: process integrity level (Windows), 
-      capabilities/effective user ID (Linux), command line arguments (crucial!), parent-child process relationships, 
+      capabilities/effective user ID (Linux), command line arguments (crucial), parent-child process relationships, 
       loaded modules/libraries.
 - [ ] Implement monitoring for new process creation and process termination events.
 - [ ] Implement monitoring for process injection attempts (detecting suspicious parent-child relationships or processes 

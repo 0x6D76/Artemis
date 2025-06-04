@@ -67,6 +67,61 @@ def CreateBaseStandardEvent (parsed_event, agent_id):
     }
 
 
+def TypeConversion (value, data_type):
+    """Converts given value to the specified data type."""
+    if value is None:
+        return None
+    try:
+        # Convert to integer
+        if data_type == "integer":
+            return int (value)
+        # Convert to boolean
+        elif data_type == "boolean":
+            if isinstance (value, str):
+                return value.lower() == "true"
+            return bool (value)
+        # Convert to float
+        elif data_type == "float":
+            return float (value)
+        # Convert to string
+        elif data_type == "string":
+            return str (value)
+        # Default conversion
+        else:
+            return value
+    except ValueError:
+        logging.warning (f"Could not convert value '{value}' to type '{data_type}'")
+        return str (value)
+    except TypeError:
+        logging.warning (f"Type error converting value '{value}' to type '{data_type}'")
+        return value
+
+
+def SetNestedValue (data_dict, key_string, value):
+    """Sets a value in a dictionary """
+    keys = key_string.split (".")
+    current_level = data_dict
+    for i, key in enumerate (keys):
+        if i == len (keys) - 1:
+            current_level [key] = value
+        else:
+            if key not in current_level or not isinstance (current_level [key], dict):
+                current_level [key] = {}
+            current_level = current_level [key]
+
+
+def ParseSysmonHashes (hashes_string):
+    """Parses the sysmon hashes string into a dictionary."""
+    hashes = {}
+    if hashes_string:
+        parts = hashes_string.split (",")
+        for part in parts:
+            if "=" in part:
+                hash_type, hash_value = part.split("=", 1)
+                hashes [hash_type.strip ()] = hash_value.strip ()
+    return hashes
+
+
 def StandardizeEvent (parsed_event, agent_id, mapping):
     """Transforms parsed event data into standardized Artemis Schema using the provided mapping."""
     if not parsed_event:
@@ -77,6 +132,7 @@ def StandardizeEvent (parsed_event, agent_id, mapping):
     mapping_key= parsed_event.get ("event_type")
     event_mapping = mapping.get (mapping_key)
 
+    # To track unmapped fields
     temp_other_data = parsed_event.copy()
 
     if not event_mapping:
@@ -101,51 +157,39 @@ def StandardizeEvent (parsed_event, agent_id, mapping):
             # Get standardized file path, e.g., process.process_id
             standard_field_path = field_mapping.get ("standard_field")
             field_type = field_mapping.get ("type")
+            handler_function_name = field_mapping.get ("handler")
 
-            # Core standardization logic
             if standard_field_path:
-                # Mapping original field values to standard keys
-                parts = standard_field_path.split ('.')
-                current_dict = standard_event
-                try:
-                    for i, part in enumerate (parts):
-                        if i == len(parts) - 1:
-                            # Apply type conversion, if specified
-                            if field_type == "integer":
-                                try:
-                                    current_dict [part] = int (original_field_value) if original_field_value is not None else None
-                                except (ValueError, TypeError):
-                                    current_dict [part] = original_field_value
-                                    logging.warning (f"Standardization: Couldn't convert {original_field_value}")
-                            elif field_type == "boolean":
-                                if isinstance (original_field_value, str):
-                                    current_dict [part] = original_field_value == "true"
-                                elif original_field_value is not None:
-                                    current_dict [part] = bool (original_field_value)
-                                else:
-                                    current_dict [part] = None
-                            # Other type conversions
-                            # elif:
-                            else:
-                                current_dict [part] = original_field_value
+                processed_value = original_field_value
+
+                if handler_function_name:
+                    try:
+                        # Parsing hashes
+                        if handler_function_name == "ParseSysmonHashes":
+                            processed_value = ParseSysmonHashes (original_field_value)
+                        # Other handler functions
                         else:
-                            # Intermediate part of the path, part of nested dictionary
-                            if part not in current_dict or not isinstance (current_dict[part], dict):
-                                current_dict [part] = {}
-                            # Move to the nested dictionary
-                            current_dict = current_dict [part]
-                except Exception as e:
-                    standard_event ["other_data"][original_field_name] = original_field_value
-                    logging.error (f"Standardization: Error processing field: {original_field_name} : {e}", exc_info = True)
+                            logging.warning (f"Unknown handler function specified: {handler_function_name}. "
+                                             f"Skipping the handler function.")
+                    except Exception as e:
+                        logging.error (
+                            f"Error calling the handler function- {handler_function_name} : {e}", exc_info = True
+                        )
+                        processed_value = original_field_value
+
+                processed_value = TypeConversion (processed_value, field_type)
+                SetNestedValue (standard_event, standard_field_path, processed_value)
             else:
-                # Mapping exists but standard_field is missing or empty
-                standard_event ["other_data"][original_field_name] = original_field_value
-                logging.warning (f"Standardization: Mapping found for {original_field_name}, but 'standard_field' is missing or empty")
+                # Mapping exist but standard_field is empty
+                standard_event ["other_data"] [original_field_name] = original_field_value
+                logging.warning (
+                    f"standardization mapping found for {original_field_name} but 'standard_field' is missing."
+                )
         else:
-            # No mapping found for original_field
+            # No mapping found for original_field. Adding to other data.
             if original_field_name != "UtcTime":
-                standard_event ["other_data"][original_field_name] = original_field_value
-                logging.debug (f"Standardization: No direct mapping found for {original_field_name}")
+                standard_event ["other_data"] [original_field_name] = original_field_value
+                logging.warning (f"Mapping not found from {original_field_name}. Adding to other_data.")
 
     # Formatting timestamp
     # Prioritize 'event_utc_time' which should already be in ISO 8601 format (from both Windows and Linux parsers)
@@ -158,7 +202,7 @@ def StandardizeEvent (parsed_event, agent_id, mapping):
             # Check if it's an epoch timestamp (numeric string or actual number)
             if isinstance (timestamp_val, (int, float)):
                 dt_obj = datetime.fromtimestamp (timestamp_val, tz=timezone.utc)
-                standard_event ["event_timestamp"] = dt_obj.isoformat (timespec='microseconds')
+                standard_event ["event_timestamp"] = dt_obj.isoformat (timespec = 'microseconds')
             elif isinstance (timestamp_val, str) and timestamp_val.replace ('.', '', 1).isdigit ():
                 epoch_float = float (timestamp_val)
                 dt_obj = datetime.fromtimestamp (epoch_float, tz=timezone.utc)

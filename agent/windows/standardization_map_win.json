@@ -11,7 +11,7 @@
     "ParentImage": { "standard_field": "process.parent_executable_path", "type": "string" },
     "CommandLine": { "standard_field": "process.command_line", "type": "string" },
     "ParentCommandLine": { "standard_field": "process.parent_command_line", "type": "string" },
-    "Hashes": { "standard_field": "process.hash", "type": "string" },
+    "Hashes": { "standard_field": "process.hashes", "type": "dictionary", "handler": "ParseSysmonHashes" },
     "IntegrityLevel": { "standard_field": "process.integrity_level", "type": "string" }
   },
 
@@ -47,7 +47,7 @@
     "ProcessId": { "standard_field": "process.process_id", "type": "string" },
     "ProcessGuid": { "standard_field": "process.process_guid", "type": "string" },
     "Image": { "standard_field": "process.executable_path", "type": "string" },
-    "Hashes": { "standard_field": "process.hash", "type": "string" },
+    "Hashes": { "standard_field": "process.hashes", "type": "dictionary", "handler": "ParseSysmonHashes" },
     "User": { "standard_field": "process.user", "type": "string"},
     "ImageLoaded": { "standard_field": "image.path", "type": "string" },
     "Signed": { "standard_field":  "image.is_signed", "type": "boolean" },
@@ -120,7 +120,7 @@
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.executable_path", "type": "string" },
     "TargetFilename": { "standard_field": "file.path", "type": "string" },
-    "Hashes": { "standard_field": "file.hashes", "type": "string" },
+    "Hashes": { "standard_field": "file.hashes", "type": "dictionary", "handler": "ParseSysmonHashes" },
     "IsExecutable": { "standard_field": "file.is_executable", "type": "boolean" },
     "Archived": { "standard_field": "file.archived", "type": "boolean" }
 
@@ -134,7 +134,7 @@
     "User": { "standard_field": "process.user", "type": "string"},
     "Image": { "standard_field": "process.executable_path", "type": "string" },
     "TargetFilename": { "standard_field": "file.path", "type": "string" },
-    "Hashes": { "standard_field": "file.hashes", "type": "string" },
+    "Hashes": { "standard_field": "file.hashes", "type": "dictionary", "handler": "ParseSysmonHashes" },
     "IsExecutable": { "standard_field": "file.is_executable", "type": "boolean" }
   },
 
